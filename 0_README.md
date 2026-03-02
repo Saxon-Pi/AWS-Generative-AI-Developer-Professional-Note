@@ -12,6 +12,7 @@ AWS Certified Generative AI Developer - Professional の受験勉強メモ
 ## 学習メモ
 別mdに記載
 
-## その他
+## その他（学習目標）
 - Bedrock を活用したエラー分析&通知システムの作成を通して知識を習得する
 - SageMaker を使用して知識を習得する
+- RAG を活用したチャットアプリを作成して仕組みとアーキテクチャを理解する
