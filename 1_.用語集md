@@ -244,6 +244,11 @@ TransformerのAttention層に仕込むのが一般的。
 ```
 ### RAG
 ```
+AGの正式名称：Retrieval-Augmented Generation
+	•	Retrieval（検索）
+	•	Augmented（拡張）
+	•	Generation（生成）
+
 ① RAGって結局どういう動き？
 
 RAGの本質は：
@@ -381,4 +386,335 @@ Retrieval-Augmented Generation
 🔥 RAGを一行で言える？
 
 「検索で資料を選び、その資料を使ってLLMに答えさせる仕組み」
+```
+### Amazon Kendra
+```
+Kendraの動き
+
+① データソース登録
+	•	S3
+	•	SharePoint
+	•	Salesforce
+	•	Confluence
+などを指定
+
+② インデックス作成（重要）
+
+Kendraは：
+	•	文書を取り込む
+	•	テキスト抽出
+	•	構造解析
+	•	メタデータ抽出
+	•	意味解析
+	•	独自インデックス作成
+
+👉 ここで「検索用データ構造」を作る
+
+③ 検索時
+
+ユーザー質問が来ると：
+
+👉 S3を直接見にいくのではなく
+👉 作成済みの Kendraインデックス を検索する
+
+流れをまとめると：
+
+S3（原本）
+   ↓
+Kendraが取り込み＆インデックス作成
+   ↓
+Kendra内部インデックス
+   ↓
+検索
+```
+Vector DBとの違い：  
+| | Vector DB型RAG | Kendra |
+| ---- | ---- | ---- |
+| Embedding管理 | 自分 | AWS内部 |
+| 検索方式 | ベクトル距離 | NLP + ランキング |
+| インデックス | ベクトル | 独自検索インデックス |
+| 生データ直接検索 | しない | しない |
+```
+🔵 Amazon Kendra
+	•	もともと「企業向けインテリジェント検索」
+	•	LLM前提ではない
+	•	単体検索サービス
+	•	NLPベースの検索＋ランキング
+
+⸻
+
+🟢 Bedrock Knowledge Bases
+	•	RAG前提
+	•	Embeddingモデル統合
+	•	Vector store統合
+	•	LLMとネイティブ連携
+
+⸻
+
+🔥 Knowledge Baseは何を使っている？
+
+Knowledge Baseは：
+	•	Embeddingモデル（Titanなど）
+	•	Vector store（OpenSearch Serverlessなど）
+
+を使う。
+
+👉 Kendraはデフォルトでは使わない
+```
+### Amazon Bedrock Knowledge Base
+```
+Knowledge Baseではモデルが2種類出てくる。
+
+⸻
+
+🟢 ① Embeddingモデル（Nova / Titan Embeddings など）
+
+役割：
+	•	テキスト → ベクトルに変換
+
+使われる場面：
+
+1️⃣ 文書をベクトル化して保存
+2️⃣ ユーザー質問をベクトル化
+
+⸻
+
+🔍 ② Vector DB
+
+ここが実際に：
+
+ベクトル同士の距離を計算して
+類似チャンクを取得する
+
+重要ポイント：
+
+Embeddingモデルは検索しない
+検索するのはVector DB
+
+⸻
+
+🟣 ③ Claudeなどの生成モデル
+
+役割：
+	•	取得されたチャンク
+	•	ユーザー質問
+
+を使って最終回答を生成
+
+⸻
+
+正しい流れ：
+① 文書 → Embeddingモデル → ベクトル → Vector DB保存
+
+② ユーザー質問 → Embeddingモデル → ベクトル
+
+③ Vector DBが類似検索（Top-K取得）
+
+④ 取得チャンク + 質問 → Claude → 回答生成
+
+⸻
+
+🎯 だから整理すると
+
+Embeddingモデル：
+→ 「数値化担当」
+
+Vector DB：
+→ 「検索担当」
+
+Claude：
+→ 「回答担当」
+
+⸻
+
+🔥 ここめちゃくちゃ重要
+
+Embeddingモデルと生成LLMは：
+
+完全に別モデル
+
+試験では混同させに来る。
+
+⸻
+
+🧠 なぜEmbeddingモデルを選ばせる？
+
+Embeddingモデルによって：
+	•	多言語対応
+	•	ベクトル次元数
+	•	コスト
+	•	精度
+
+が変わる。
+
+だから選択肢に出てくる。
+
+⸻
+
+🎯 試験的チェックポイント
+
+問題文に：
+	•	「検索精度を改善」
+→ Embeddingモデル変更
+	•	「回答の質を改善」
+→ 生成モデル変更
+```
+### Chunking
+```
+Chunkingとは：
+
+文書を意味ある小さな塊に分割すること
+```
+### Pre-retrieval
+```
+🔵 Pre-retrievalとは？
+
+一言で言うと：
+検索する前にクエリを最適化する処理
+
+🔥 なぜ必要？
+
+ユーザーの質問は：
+	•	曖昧
+	•	長い
+	•	ノイズが多い
+	•	検索に向いてない
+
+そのままEmbeddingすると精度が落ちる。
+ユーザーの自然言語を「検索に最適な形」に変換する工程
+
+🧠 例
+
+ユーザー質問：
+「うちの会社の有給ってどんな感じ？」
+→ 検索に向いてない。
+
+Pre-retrievalで：
+→ 「社内規定 有給休暇 申請方法」
+
+みたいに書き換える。
+
+これを：
+Query rewriting（クエリ書き換え）
+という。
+
+🔥 Pre-retrievalでやること
+
+代表的なのは：
+
+① クエリ書き換え（Query Reformulation）
+	•	同義語追加
+	•	明確化
+	•	ノイズ除去
+
+⸻
+
+② クエリ拡張（Query Expansion）
+
+例：
+
+「AI法規制」
+
+→
+「人工知能 法律 規制 EU AI Act 日本」
+
+みたいに関連語を追加
+
+⸻
+
+③ ハイブリッド検索準備
+	•	ベクトル検索
+	•	キーワード検索（BM25）
+
+両方を使う準備
+
+⸻
+
+🧠 RAGとの関係
+
+RAGの精度は：
+
+質問の質 × Embedding × チャンク設計
+
+だから：
+
+検索前の質問を整えるだけで精度が上がる
+
+⸻
+
+🔥 もっと高度な話
+
+LLMを使って：
+
+「この質問を検索向けに書き換えて」
+
+とやるケースもある。
+
+これもPre-retrieval。
+
+⸻
+
+🎯 試験で出るポイント
+
+問題文に：
+	•	「関連性の低い文書が取得される」
+	•	「検索精度が低い」
+	•	「ユーザーの質問が曖昧」
+
+とあれば：
+
+👉 Query rewriting
+👉 ハイブリッド検索
+👉 チャンク戦略見直し
+
+⸻
+
+RAG高度構造まとめ
+
+ User Question
+   ↓
+Pre-retrieval（書き換え・拡張）
+   ↓
+Embedding
+   ↓
+Vector DB検索
+   ↓
+関連チャンク取得
+   ↓
+LLMで回答生成
+
+⸻
+
+🔹 RAGにおけるPre-retrieval
+
+Pre-retrievalを使うか使わないかは場合による。
+
+パターン1（シンプル構成）
+
+→ 何もやらない
+→ ユーザー質問をそのままEmbedding
+
+パターン2（高度構成）
+
+→ LLMでクエリを書き換える
+→ それをEmbedding
+
+つまり：
+
+Pre-retrievalにLLMを使うこともある
+
+🔹 Bedrock Knowledge BaseはPre-retrievalしてる？
+
+結論：
+
+🟡 基本はしていない（高度なクエリ書き換えは自動ではやらない）
+
+Bedrock Knowledge Baseは：
+	•	ユーザー質問をそのままEmbedding
+	•	ベクトル検索
+	•	Top-K取得
+	•	生成
+
+という標準的なRAG構成。
+
 ```
