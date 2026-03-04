@@ -387,6 +387,77 @@ Retrieval-Augmented Generation
 
 「検索で資料を選び、その資料を使ってLLMに答えさせる仕組み」
 ```
+### RAG の評価
+```
+RAG評価の基本構造（RAG Triad）
+
+RAGは3つのフェーズで構成される：
+Query
+↓
+Retrieval
+↓
+Generation
+
+これを RAG triad と呼ぶ。
+
+そして評価も3つの観点で行う。
+
+フェーズ：評価
+Query → Retrieval：Context relevance
+Retrieval → Generation：Groundedness
+Query → Answer：Answer relevance
+
+① Context relevance
+
+評価すること：取得したcontextが、質問に本当に関連しているか
+
+② Groundedness
+
+評価すること：回答がcontextに基づいているか（hallucinationしていないか）
+
+③ Answer relevance
+
+評価すること：質問にちゃんと答えているか
+
+⸻
+
+RAGの評価方法
+
+① Ground Truth
+
+Ground truth は「この質問なら、この回答が正しい」という 基準データ。
+人間の役割は以下のような「評価の基準を作る」こと。
+
+例：
+{
+ "prompt": "What is the lifespan of a chicken?",
+ "reference_answer": "Chickens typically live between 5 and 10 years.",
+ "reference_context": "Chickens usually live 5-10 years depending on breed."
+}
+
+・質問
+・理想回答
+・理想context（任意）
+をセットで用意する
+
+② LLM as a Judge
+
+評価は別の LLM が行う。（複数 LLM でも OK）
+
+RAG system
+↓
+answer
+
+Judge LLM
+↓
+score
+
+以下のような RAG の評価指標は数式で測れないため、LLM で採点する。
+・helpful
+・coherent
+・complete
+
+```
 ### Amazon Kendra
 ```
 Kendraの動き
@@ -527,13 +598,9 @@ Claude：
 
 ⸻
 
-🔥 ここめちゃくちゃ重要
-
 Embeddingモデルと生成LLMは：
 
 完全に別モデル
-
-試験では混同させに来る。
 
 ⸻
 
@@ -546,8 +613,6 @@ Embeddingモデルによって：
 	•	精度
 
 が変わる。
-
-だから選択肢に出てくる。
 
 ⸻
 
@@ -562,8 +627,100 @@ Embeddingモデルによって：
 ### Chunking
 ```
 Chunkingとは：
-
 文書を意味ある小さな塊に分割すること
+
+Knowledge Baseでは データソース（S3など）を取り込むときに chunking が行われる。
+→ chunkingはEmbedding前の前処理
+
+S3ドキュメント
+   ↓
+chunking（分割）
+   ↓
+Embeddingモデル
+   ↓
+Vector DB (OpenSearch / Aurora / Pineconeなど)
+
+⸻
+
+Bedrock Knowledge Base では以下の種類を設定できる
+
+① Fixed-size chunking
+
+	•	Fixed size = 「1チャンクを何トークン（or 何文字）で切るか」のルール
+	•	例：300 tokens / chunk（Bedrockのデフォルトとしてよく見かける設定）
+
+② No chunking
+
+	•	No chunking = 1ドキュメント = 1チャンク（に近い挙動）
+
+副作用
+	•	長文ドキュメントほど 検索が雑 になりやすい（トピック混在問題）
+	•	“この章だけ欲しい” ができず、必要箇所だけ引けない
+	•	取得した1チャンクが巨大で LLMに渡せない/高コスト になりがち
+
+「短いFAQ集」とかなら成立するけど、規程PDFみたいな長文には不利になりやすい。
+
+③ Hierarchical chunking
+
+	•	親チャンク：章/節レベル（粗い粒度、コンテキスト用）
+	•	子チャンク：段落/数百トークン（細かい粒度、検索用）
+
+検索の考え方は実装により差があるけど、よくある狙いは：
+	•	まず細かいチャンクで当てる（精度）
+	•	見つかった場所の親（章/節）も一緒に渡す（文脈補完）
+
+つまり 「精度（小）＋文脈（大）」を両立させる作戦。
+
+④ Semantic chunking
+
+これは 固定長でブツ切りにせず、意味の切れ目で分割する ってこと。
+
+どうやって「意味の切れ目」を見つける？
+
+やり方はいろいろあるけど代表例：
+	•	見出し（H1/H2/H3）、段落、箇条書きなどの構造で切る
+	•	文同士のEmbeddingの変化を見て、話題が変わった地点で切る
+	•	「この段落は同じテーマ？」みたいな類似度でまとまりを作る
+
+メリット
+	•	チャンクが1トピックに寄りやすい → 検索が刺さりやすい
+	•	文脈も必要な範囲だけ入りやすい
+
+デメリット
+	•	固定長より実装/前処理が重い（時間・コスト）
+	•	チャンクサイズがバラけるので、運用で調整が必要になりやすい
+
+⸻
+
+どれを選ぶといい？
+
+試験・実務の両方で使える目安：
+	•	まず Fixed-size（+ overlap少し） で始めるのが王道
+	•	「話題が混ざって検索が弱い」→ Semantic / smaller chunks
+	•	「文脈不足で誤答」→ 少し大きく / overlap増 / hierarchical
+	•	「長文PDF（規程/マニュアル）」→ Hierarchical or Semantic が強いこと多い
+
+⸻
+
+チャンクを大きくすると検索精度は上がる？
+
+“上がることもあるけど、下がることもある” が答え。
+
+大きくするメリット
+	•	1チャンクに**文脈（前後関係）**が入りやすい
+	•	「定義→例→注意」みたいにまとまった説明を1塊で渡せる
+
+大きくする副作用（よく起きる）
+	•	検索がぼやける（topic dilution）
+1チャンクに複数トピックが混ざると、Embeddingが「平均化」されて
+“どれにもそこそこ近い” みたいになって関連チャンクが刺さりにくくなる
+	•	LLMに渡すコンテキストが無駄に増える
+Top-Kで取ってくるチャンクが全部デカいと、すぐトークン上限に近づく
+	•	コスト/レイテンシ増（入れる文字が増えるほど増えがち）
+	•	ノイズ混入：回答に不要な段落まで一緒に渡してしまう
+
+なので「文脈不足で誤答する」なら 少し大きく、
+「関係ない話まで混ざって刺さらない」なら 小さく が基本方針。
 ```
 ### Pre-retrieval
 ```
@@ -716,5 +873,117 @@ Bedrock Knowledge Baseは：
 	•	生成
 
 という標準的なRAG構成。
+```
+### Vector Size
+```
+Embeddingはこういう形のデータになる：
+[0.23, -0.91, 0.54, ...]
 
+この 要素の数 = Vector Size（次元数）
+
+各モデルの Vector Size は、
+Titan：1024〜1536
+OpenAI：1536
+小型モデル：256〜768
+
+⸻
+
+Vector Sizeが大きいと？
+
+メリット
+	•	より多くの意味情報を表現できる
+	•	検索精度が上がる可能性
+
+デメリット
+	•	ストレージ増加
+	•	計算コスト増加
+	•	検索遅延
+
+⸻
+
+Vector Sizeが小さいと？
+
+メリット
+	•	保存コスト安い
+	•	検索高速
+	•	メモリ節約
+
+デメリット
+	•	意味情報が失われる
+	•	Retrieval精度低下
+
+⸻
+
+Chunkサイズとの関係
+
+例えば、
+chunk = 300 tokens
+embedding = 1024 dimensions
+
+とすると、
+
+embeddingの方がデータサイズ大きいこともある
+
+つまり
+
+embedding保存コストが支配的になる場合がある。
+
+⸻
+
+Domainによって最適サイズが違う
+
+複雑な意味検索
+
+例
+	•	医療
+	•	法律
+	•	技術文書
+
+→ 大きいvector推奨
+
+単純な検索
+
+例
+	•	FAQ
+	•	商品説明
+	•	カテゴリ分類
+
+→ 小さいvectorでもOK
+
+⸻
+
+Dense vs Sparse Embedding
+
+Sparse vector：ほとんど0のベクトル（One-hot encoding）
+例：[0,0,0,1,0,0,0]
+
+特徴
+	•	シンプル
+	•	似てる概念を表現できない
+	•	無駄な次元が多い
+
+Dense embedding（生成AIで使う）
+例：[0.12, -0.55, 0.88, ...]
+
+特徴
+	•	数値が全部埋まってる
+	•	意味を圧縮して表現
+	•	高効率
+
+つまり
+
+RAGは基本Dense Embedding
+
+⸻
+
+Similarity（類似度）
+
+Vector DBは「どのベクトルが近いか」で検索する。
+
+代表的な計算方法：Cosine Similarity
+→ ベクトルの角度で類似度を測る。
+
+値の範囲
+1 = 完全一致
+0 = 無関係
 ```
