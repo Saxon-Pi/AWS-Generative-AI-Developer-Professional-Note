@@ -624,6 +624,65 @@ Embeddingモデルによって：
 	•	「回答の質を改善」
 → 生成モデル変更
 ```
+### Multimodal Embedding
+```
+マルチモーダルEmbeddingでは
+	• 画像
+	• テキスト
+	• 音声
+	• 動画
+
+を同じ意味空間（embedding space）に変換する。
+
+異なるデータ形式
+↓
+同じベクトル空間
+↓
+比較可能
+
+⸻
+
+・普通のEmbedding（テキスト）
+"chicken" → [0.12, 0.88, 0.31 ...]
+
+・Multimodal Embedding
+"chicken" text → [0.12, 0.88, 0.31]
+chicken image → [0.11, 0.85, 0.33]
+
+⸻
+
+ユーザが
+
+search: "chicken"
+
+すると
+
+• 画像
+• テキスト
+• 動画
+
+すべてヒットする。
+
+⸻
+
+Vector DBの構造は
+
+vector
+metadata
+original data
+
+で構成され、データ形式を気にしない
+
+例1：
+vector: [0.12,0.44,0.78...]
+type: image
+content: chicken.jpg
+
+例2：
+vector: [0.11,0.46,0.77...]
+type: text
+content: "chicken is a domesticated bird"
+```
 ### Chunking
 ```
 Chunkingとは：
@@ -986,4 +1045,63 @@ Vector DBは「どのベクトルが近いか」で検索する。
 値の範囲
 1 = 完全一致
 0 = 無関係
+```
+### Bedrock Guardrails
+```
+Bedrock Guardrailsにはいくつか機能がある。
+
+例
+	•	Content filtering
+	•	Sensitive info filtering
+	•	Topic restriction
+	•	Automated Reasoning Checks
+
+⸻
+
+Automated Reasoning Checks とは
+
+Automated Reasoning Checks
+= 論理ルールを使ってLLMの回答の正しさを検証する機能
+
+LLMの回答
+↓
+ポリシールール
+↓
+論理チェック
+
+例：
+会社のルール
+	• フルタイム社員
+	• AND
+	• 勤続1年以上
+→ 育休取得可能
+
+Automated reasoningはこれを
+	• isFullTime
+	• yearsOfService >= 1
+	
+のような論理ルールに変換する。
+
+実際のチェック：
+
+ユーザ質問：
+Johnは6ヶ月勤務のフルタイム社員です
+育休取れますか？
+
+LLM回答：
+Yes
+
+Guardrail reasoning check：
+fulltime = true
+years = 0.5
+
+ルール：
+years >= 1
+
+結果：
+FALSE（LLM回答 = 間違い）
+
+Bedrockのすごいところ：
+ルールを事前に定義する必要なく、関連する文章（PDF文章）を渡すだけでOK
+（Bedrockが論理ルールに変換する）
 ```
