@@ -1162,3 +1162,109 @@ Output filter
 ↓
 User
 ```
+### Prompt Manager
+```
+Prompt Managerとは：
+
+プロンプトテンプレート管理サービス
+
+主な機能はこの3つ。
+	•	プロンプトテンプレート管理
+	•	変数化
+	•	バージョン管理
+
+⸻
+
+Prompt Managerを使うとこうなる：
+
+以下のコードを例にすると、
+body = {
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 800,
+    "temperature": 0.2,
+    "messages": [
+        {"role": "user", "content": [{"type": "text", "text": prompt}]}
+    ],
+}
+
+Prompt Managerが管理するのは主にここ。（実際のプロンプト文章の部分）
+"text": prompt
+
+例えばテンプレートをこう作ると、
+You are a financial assistant.
+Answer the following question.
+Question:
+{{question}}
+Context:
+{{context}}
+
+コードではこう呼び出す。
+prompt = prompt_manager.render(
+    question=user_question,
+    context=rag_context
+)
+
+そして
+"text": prompt
+に入れる。
+```
+### Prompt Chaining
+```
+Prompt Chaining とは、
+
+LLMの処理を1回で終わらせず
+複数ステップに分けること。
+
+例：
+User question
+↓
+Step1: 情報抽出
+↓
+Step2: 要約
+↓
+Step3: 回答生成
+
+Prompt1 → Prompt2 → Prompt3
+でそれぞれ別のプロンプト
+
+⸻
+
+なぜPrompt Chainingを使うのか？
+
+LLMは「1つの巨大プロンプト」より、「段階的な処理」の方が安定する。
+
+普通のプロンプトだと：
+documents
+question
+rules
+format
+reasoning
+
+全部まとめるのに対して、chaining だと：
+Step1: relevant doc extraction
+Step2: reasoning
+Step3: answer generation
+
+に分ける。
+
+⸻
+
+Bedrock Flowsは
+
+LLMワークフローオーケストレーション
+
+つまり、LLM処理をノードでつなぐことができる。
+
+User Input
+   ↓
+Prompt Node
+   ↓
+Knowledge Base
+   ↓
+Prompt Node
+   ↓
+Output
+
+コードベースではなく、視覚的なノードベースでできるのが強み。
+Prompt Manager との併用も可能。
+```
