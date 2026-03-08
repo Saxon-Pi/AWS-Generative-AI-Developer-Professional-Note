@@ -133,7 +133,7 @@ Pre-trainingは本来：
 	•	「最新データを反映」→ RAG
 	•	「学習コストを抑えたい」→ RAG
 ```
-### 転移学習
+## 転移学習
 ```
 🎯 転移学習（Transfer Learning）とは
 すでに学習済みのモデルを、別タスクに活用すること
@@ -242,7 +242,7 @@ TransformerのAttention層に仕込むのが一般的。
 	•	モデル本体そのまま使える
 	•	タスクごとにLoRAだけ差し替え可能
 ```
-### RAG
+## RAG
 ```
 AGの正式名称：Retrieval-Augmented Generation
 	•	Retrieval（検索）
@@ -387,7 +387,7 @@ Retrieval-Augmented Generation
 
 「検索で資料を選び、その資料を使ってLLMに答えさせる仕組み」
 ```
-### RAG の評価
+## RAG の評価
 ```
 RAG評価の基本構造（RAG Triad）
 
@@ -458,7 +458,7 @@ score
 ・complete
 
 ```
-### Amazon Kendra
+## Amazon Kendra
 ```
 Kendraの動き
 
@@ -532,7 +532,7 @@ Knowledge Baseは：
 
 👉 Kendraはデフォルトでは使わない
 ```
-### Amazon Bedrock Knowledge Base
+## Amazon Bedrock Knowledge Base
 ```
 Knowledge Baseではモデルが2種類出てくる。
 
@@ -624,7 +624,7 @@ Embeddingモデルによって：
 	•	「回答の質を改善」
 → 生成モデル変更
 ```
-### Multimodal Embedding
+## Multimodal Embedding
 ```
 マルチモーダルEmbeddingでは
 	• 画像
@@ -683,7 +683,7 @@ vector: [0.11,0.46,0.77...]
 type: text
 content: "chicken is a domesticated bird"
 ```
-### Chunking
+## Chunking
 ```
 Chunkingとは：
 文書を意味ある小さな塊に分割すること
@@ -781,7 +781,7 @@ Top-Kで取ってくるチャンクが全部デカいと、すぐトークン上
 なので「文脈不足で誤答する」なら 少し大きく、
 「関係ない話まで混ざって刺さらない」なら 小さく が基本方針。
 ```
-### Pre-retrieval
+## Pre-retrieval
 ```
 🔵 Pre-retrievalとは？
 
@@ -933,7 +933,7 @@ Bedrock Knowledge Baseは：
 
 という標準的なRAG構成。
 ```
-### Vector Size
+## Vector Size
 ```
 Embeddingはこういう形のデータになる：
 [0.23, -0.91, 0.54, ...]
@@ -1046,7 +1046,7 @@ Vector DBは「どのベクトルが近いか」で検索する。
 1 = 完全一致
 0 = 無関係
 ```
-### Bedrock Guardrails
+## Bedrock Guardrails
 ```
 Bedrock Guardrailsにはいくつか機能がある。
 
@@ -1105,7 +1105,7 @@ Bedrockのすごいところ：
 ルールを事前に定義する必要なく、関連する文章（PDF文章）を渡すだけでOK
 （Bedrockが論理ルールに変換する）
 ```
-### Prompt Injection
+## Prompt Injection
 ```
 Prompt Injection
 = ユーザがプロンプトを操作して
@@ -1162,7 +1162,7 @@ Output filter
 ↓
 User
 ```
-### Prompt Manager
+## Prompt Manager
 ```
 Prompt Managerとは：
 
@@ -1208,7 +1208,7 @@ prompt = prompt_manager.render(
 "text": prompt
 に入れる。
 ```
-### Prompt Chaining
+## Prompt Chaining
 ```
 Prompt Chaining とは、
 
@@ -1267,4 +1267,55 @@ Output
 
 コードベースではなく、視覚的なノードベースでできるのが強み。
 Prompt Manager との併用も可能。
+```
+## Bedrock Data Automation
+```
+Bedrock Data Automation は、
+非構造データを構造データに変換する仕組み。
+
+例えば、
+	• PDF
+	• 画像
+	• メール
+	• ドキュメント
+
+を以下のように変換する
+{
+  "invoice_number": "12345",
+  "date": "2024-05-01",
+  "total": 1200
+}
+
+つまり、
+LLM + Document AI
+で情報抽出をするサービス
+
+⸻
+
+Blueprintとは、
+抽出したいデータの構造定義
+
+例：
+InvoiceBlueprint
+{
+  "invoice_number": string,
+  "date": date,
+  "vendor": string,
+  "items": [
+    {
+      "name": string,
+      "price": number
+    }
+  ],
+  "total": number
+}
+
+このBlueprintを渡すと LLM は、
+ドキュメント
+↓
+Blueprintに当てはめる
+↓
+構造データ生成
+
+してくれる。
 ```
