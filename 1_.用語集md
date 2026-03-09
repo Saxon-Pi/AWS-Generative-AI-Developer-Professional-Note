@@ -1319,3 +1319,27 @@ Blueprintに当てはめる
 
 してくれる。
 ```
+## SageMaker Data Wrangler
+```
+SageMaker Data Wrangler は、
+データ変換をGUIで作り、その処理をコードとしてエクスポートするツール
+
+→ データ前処理を作る開発ツールであり、実行基盤ではない
+
+dataset
+↓
+可視化
+↓
+変換処理作成
+↓
+コード生成
+
+⸻
+
+Data Wranglerには data insights という機能があり、
+	•	欠損値
+	•	外れ値
+	•	カテゴリ分布
+
+などを分析して、変換の提案をしてくれる、
+```
