@@ -1343,3 +1343,38 @@ Data Wranglerには data insights という機能があり、
 
 などを分析して、変換の提案をしてくれる、
 ```
+## OpenSearch Service
+```
+OpenSearch は Vector DB として使うことが可能。
+→ RAG でよく使われる。
+
+Embedding vector
+↓
+OpenSearch
+↓
+k-NN search（ベクトル距離検索 → セマンティック検索）
+
+⸻
+
+インデックス
+
+OpenSearch は index という単位でデータを管理する。
+
+イメージ：
+Index = テーブル
+Document = レコード
+Field = カラム
+
+⸻
+
+シャーディング
+
+OpenSearch のスケール方法：
+
+Index
+ ├ shard1
+ ├ shard2
+ └ shard3
+
+ → これにより分散検索が可能。
+```
