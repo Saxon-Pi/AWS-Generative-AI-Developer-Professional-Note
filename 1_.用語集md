@@ -1378,3 +1378,102 @@ Index
 
  → これにより分散検索が可能。
 ```
+## Semantic search vs Hybrid search
+```
+Semantic search = ベクトル（意味）検索
+Hybrid search = ベクトル検索 + キーワード検索
+
+⸻
+
+Semantic search は意味ベースの検索：
+→ 意味が近い文章を探す
+
+Query
+↓
+Embedding
+↓
+Vector DB
+↓
+類似ベクトル検索
+
+Semantic searchの強み：
+	• 意味理解
+	• 言い換え対応
+	• 自然言語検索
+
+Semantic searchの弱み：
+	• 固有名詞
+	• ID
+	• エラーコード
+→ 意味ベクトルに変換されると精度が落ちる
+
+⸻
+
+Keyword search（従来の検索）
+
+単語一致検索（BM25、TF-IDF など）
+→ その単語が含まれる文章だけヒットする
+
+⸻
+
+Hybrid search は、
+Semantic search + Keyword search の組み合わせ
+→ 意味 + 単語一致 で検索
+
+Query
+↓
+Vector search
+↓
+Keyword search
+↓
+結果を合成
+↓
+ランキング
+
+⸻
+
+RAG における Hybrid search の重要性
+
+Semantic search だけだと検索精度が落ちる項目に対して、
+Hybrid search を使うことで検索精度を向上させることができる
+	• エラーコード
+	• 製品名
+	• 関数名
+```
+## Amazon S3 Vectors
+```
+S3 Vectors は、S3ベースのVector Database
+OpenSearch と同様に Vector DB として使われる
+
+embedding
+↓
+vector store
+↓
+similarity search
+
+OpenSearch がクラスター常時稼働に対して、S3 Vector はストレージベースのためコストが安い
+高頻度な検索は OpenSearch、低頻度の RAG には S3 Vector などの使い分けができる
+
+⸻
+
+s3vectors-embed-cli
+→ embedding生成 + S3保存 の CLI ツール
+
+⸻
+
+RAG の構成
+
+Documents
+↓
+Chunking
+↓
+Embedding model
+↓
+Vector Store (OpenSearch / S3 Vector)
+↓
+Similarity search
+↓
+Context
+↓
+LLM
+```
