@@ -1477,3 +1477,73 @@ Context
 ↓
 LLM
 ```
+## Re-ranker 
+```
+Re-ranker は、
+取得したチャンクを、もう一度評価してランキングを並び替えるモデル
+
+⸻
+
+普通の RAG フロー：
+
+User Query
+↓
+Embedding
+↓
+Vector DB
+↓
+Top-K チャンク取得
+↓
+LLM
+
+→ Top-K = 5 で Vector DB から 5個のチャンクを抽出するが、
+Vector 検索は「意味の近さ」で検索するため、完全に正しいランキングではないことが多い
+
+クエリ：
+How do I reset my password?
+
+Vector検索結果：
+1 password change instructions
+2 account login help
+3 password security policy
+4 billing support
+5 password reset guide
+
+→ 実際には password reset guide が関連性が強い
+（vector similarity だけだと順番がズレる）
+
+⸻
+
+Re-ranker を組み込んだ RAG フロー：
+
+User Query
+↓
+Embedding
+↓
+Vector DB
+↓
+Top 10 chunks
+↓
+Re-ranker model
+↓
+Top 3 chunks
+↓
+LLM
+
+Vector検索 = 粗い検索
+Re-ranker = 精密ランキング
+
+Re-ranker は、Query + Chunk を直接評価するモデル
+→ Embedding する前のチャンクを使用する
+
+例えば、
+Query: reset password
+Chunk: password reset guide
+→ score = 0.92
+
+Query: reset password
+Chunk: billing help
+→ score = 0.11
+
+のように、関連度スコアを計算してスコアの高いチャンクを抽出する
+```
