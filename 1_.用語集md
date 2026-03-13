@@ -1547,3 +1547,85 @@ Chunk: billing help
 
 のように、関連度スコアを計算してスコアの高いチャンクを抽出する
 ```
+## Multi agent workflows (Agentic AI)
+```
+① Parallelization（並列化）
+
+複数のエージェントが同時にタスクを実行する
+→ それぞれのエージェントが専門分野を持っている
+Orchestrator というタスク管理エージェントが存在する
+
+目的：
+・処理速度向上
+・異なる観点の分析
+
+例：
+User query
+↓
+Agent A (financial analysis)
+Agent B (risk analysis)
+Agent C (market analysis)
+↓
+Orchestrator
+↓
+Final result
+
+⸻
+
+② Majority Voting（多数決）
+
+並列化の特殊パターン
+複数のエージェントが同じタスクを実行する
+
+目的：
+LLMの出力のばらつきを減らす
+
+例：
+Agent1 → answer A
+Agent2 → answer B
+Agent3 → answer A
+Final answer → A
+
+⸻
+
+③ Routing（ルーティング）
+
+ユーザーの質問を確認して、最適なエージェントにタスクを割り振る
+Router agent という振り分けエージェントが存在する
+
+例：
+User question
+↓
+Router agent
+↓
+Finance agent
+Legal agent
+Support agent
+
+⸻
+
+④ Sequential / Prompt Chaining（直列）
+
+エージェントをパイプラインとして使う
+Prompt chaining とも呼ばれる
+
+例：
+User query
+↓
+Agent1 (retrieve information)
+↓
+Agent2 (summarize)
+↓
+Agent3 (generate final response)
+
+⸻
+
+Multi-agent system では以下を担う Orchestrator が重要
+・タスク分解
+・エージェント選択
+・結果統合
+
+AWS ではこれを以下で実装することが多い
+・Bedrock Agents
+・Bedrock Flows
+```
