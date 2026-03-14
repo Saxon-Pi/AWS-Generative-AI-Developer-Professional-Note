@@ -1629,3 +1629,157 @@ AWS ではこれを以下で実装することが多い
 ・Bedrock Agents
 ・Bedrock Flows
 ```
+## Short/Long term memory
+```
+Short-term memory（短期記憶）
+
+現在のタスクや会話の文脈を理解するための一時的な記憶
+この会話の文脈を理解するための作業メモリ
+
+例：
+	•	直近のチャット履歴
+	•	ユーザーが今アップロードした画像
+	•	今渡されたコード
+	•	今のログ
+	•	現在のツール実行結果
+
+⸻
+
+Long-term memory（長期記憶）
+
+時間を超えて保持する知識やユーザー情報
+将来の推論のために保存された知識
+
+例：
+	•	過去の会話履歴
+	•	ユーザー設定
+	•	過去のインシデント
+	•	ドキュメント
+	•	ナレッジベース
+	•	ベクトルDB
+	•	RAGデータ
+```
+## Strands Agents
+```
+Strands Agents は AWS が開発した AI エージェント開発用の SDK
+
+⸻
+
+① Agent = LLM + Tools
+
+例：
+Agent
+↓
+Weather API
+Calculator
+Database
+Search
+
+⸻
+
+② Agent Loop
+
+エージェントが目標を達成するまで
+推論 → ツール実行 → 状態更新
+を繰り返す処理ループ
+基本的に 1つの LLM がループ内の処理を全て実行する
+
+イメージ：
+User goal
+↓
+Agent reasoning
+↓
+Tool selection
+↓
+Tool execution
+↓
+Observation
+↓
+Goal reached?
+   ├ Yes → Return answer
+   └ No → Loop again
+
+ループが止まる条件：
+Goal reached
+Max steps
+Error
+Human intervention
+
+Agent Loop は max_iterations などで制御する
+→ 無限ループ防止
+
+⸻
+
+③ Observation（観測）
+
+Agent Loop では Tool result を Observation として LLM に返す
+
+⸻
+
+④ Planning
+
+Agent はタスク分解を行う
+
+例：
+User goal
+↓
+Plan tasks
+↓
+Execute tasks
+```
+## AWS AgentCore
+```
+AgentCoreとは、
+
+AIエージェントの実行基盤（Agent runtime platform）
+→ Agent を実行・管理・接続するためのマネージド基盤
+
+主な役割
+	•	Agent の実行
+	•	ツール呼び出し
+	•	メモリ管理
+	•	API接続
+	•	セキュリティ
+	•	スケーリング
+
+AgentCoreの目的：
+
+Agentシステムは、LLM、RAG、ツール、API、状態管理、メモリ、セキュリティ、…
+の管理が複雑であり、これをマネージド化することで運用負荷を削減できる
+
+メリット：
+① エージェント開発の簡略化
+② メモリ管理
+③ ツール統合
+④ スケーリング
+
+⸻
+
+AgentCoreの主要コンポーネント
+
+1. AgentCore Runtime
+
+Agent を実行する環境、実行基盤
+
+特徴：
+	•	サーバレス
+	•	自動スケール
+	•	Bedrockエージェントを実行
+
+2. AgentCore Memory
+
+Agent の記憶を管理
+	•	Short-term memory（会話コンテキスト）
+	•	Long-term memory（ユーザ情報、履歴、知識）
+
+3. AgentCore Gateway
+
+ツール接続を統一
+	•	API
+	•	Lambda
+	•	DB
+	•	外部サービス
+
+MCP(Model Context Protocol) Tools：
+LLMがツールと会話するための標準プロトコル（AI用API規格）
+```
