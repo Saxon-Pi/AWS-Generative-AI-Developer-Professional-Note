@@ -1319,3 +1319,541 @@ Blueprintに当てはめる
 
 してくれる。
 ```
+## SageMaker Data Wrangler
+```
+SageMaker Data Wrangler は、
+データ変換をGUIで作り、その処理をコードとしてエクスポートするツール
+
+→ データ前処理を作る開発ツールであり、実行基盤ではない
+
+dataset
+↓
+可視化
+↓
+変換処理作成
+↓
+コード生成
+
+⸻
+
+Data Wranglerには data insights という機能があり、
+	•	欠損値
+	•	外れ値
+	•	カテゴリ分布
+
+などを分析して、変換の提案をしてくれる、
+```
+## OpenSearch Service
+```
+OpenSearch は Vector DB として使うことが可能。
+→ RAG でよく使われる。
+
+Embedding vector
+↓
+OpenSearch
+↓
+k-NN search（ベクトル距離検索 → セマンティック検索）
+
+⸻
+
+インデックス
+
+OpenSearch は index という単位でデータを管理する。
+
+イメージ：
+Index = テーブル
+Document = レコード
+Field = カラム
+
+⸻
+
+シャーディング
+
+OpenSearch のスケール方法：
+
+Index
+ ├ shard1
+ ├ shard2
+ └ shard3
+
+ → これにより分散検索が可能。
+```
+## Semantic search vs Hybrid search
+```
+Semantic search = ベクトル（意味）検索
+Hybrid search = ベクトル検索 + キーワード検索
+
+⸻
+
+Semantic search は意味ベースの検索：
+→ 意味が近い文章を探す
+
+Query
+↓
+Embedding
+↓
+Vector DB
+↓
+類似ベクトル検索
+
+Semantic searchの強み：
+	• 意味理解
+	• 言い換え対応
+	• 自然言語検索
+
+Semantic searchの弱み：
+	• 固有名詞
+	• ID
+	• エラーコード
+→ 意味ベクトルに変換されると精度が落ちる
+
+⸻
+
+Keyword search（従来の検索）
+
+単語一致検索（BM25、TF-IDF など）
+→ その単語が含まれる文章だけヒットする
+
+⸻
+
+Hybrid search は、
+Semantic search + Keyword search の組み合わせ
+→ 意味 + 単語一致 で検索
+
+Query
+↓
+Vector search
+↓
+Keyword search
+↓
+結果を合成
+↓
+ランキング
+
+⸻
+
+RAG における Hybrid search の重要性
+
+Semantic search だけだと検索精度が落ちる項目に対して、
+Hybrid search を使うことで検索精度を向上させることができる
+	• エラーコード
+	• 製品名
+	• 関数名
+```
+## Amazon S3 Vectors
+```
+S3 Vectors は、S3ベースのVector Database
+OpenSearch と同様に Vector DB として使われる
+
+embedding
+↓
+vector store
+↓
+similarity search
+
+OpenSearch がクラスター常時稼働に対して、S3 Vector はストレージベースのためコストが安い
+高頻度な検索は OpenSearch、低頻度の RAG には S3 Vector などの使い分けができる
+
+⸻
+
+s3vectors-embed-cli
+→ embedding生成 + S3保存 の CLI ツール
+
+⸻
+
+RAG の構成
+
+Documents
+↓
+Chunking
+↓
+Embedding model
+↓
+Vector Store (OpenSearch / S3 Vector)
+↓
+Similarity search
+↓
+Context
+↓
+LLM
+```
+## Re-ranker 
+```
+Re-ranker は、
+取得したチャンクを、もう一度評価してランキングを並び替えるモデル
+
+⸻
+
+普通の RAG フロー：
+
+User Query
+↓
+Embedding
+↓
+Vector DB
+↓
+Top-K チャンク取得
+↓
+LLM
+
+→ Top-K = 5 で Vector DB から 5個のチャンクを抽出するが、
+Vector 検索は「意味の近さ」で検索するため、完全に正しいランキングではないことが多い
+
+クエリ：
+How do I reset my password?
+
+Vector検索結果：
+1 password change instructions
+2 account login help
+3 password security policy
+4 billing support
+5 password reset guide
+
+→ 実際には password reset guide が関連性が強い
+（vector similarity だけだと順番がズレる）
+
+⸻
+
+Re-ranker を組み込んだ RAG フロー：
+
+User Query
+↓
+Embedding
+↓
+Vector DB
+↓
+Top 10 chunks
+↓
+Re-ranker model
+↓
+Top 3 chunks
+↓
+LLM
+
+Vector検索 = 粗い検索
+Re-ranker = 精密ランキング
+
+Re-ranker は、Query + Chunk を直接評価するモデル
+→ Embedding する前のチャンクを使用する
+
+例えば、
+Query: reset password
+Chunk: password reset guide
+→ score = 0.92
+
+Query: reset password
+Chunk: billing help
+→ score = 0.11
+
+のように、関連度スコアを計算してスコアの高いチャンクを抽出する
+```
+## Multi agent workflows (Agentic AI)
+```
+① Parallelization（並列化）
+
+複数のエージェントが同時にタスクを実行する
+→ それぞれのエージェントが専門分野を持っている
+Orchestrator というタスク管理エージェントが存在する
+
+目的：
+・処理速度向上
+・異なる観点の分析
+
+例：
+User query
+↓
+Agent A (financial analysis)
+Agent B (risk analysis)
+Agent C (market analysis)
+↓
+Orchestrator
+↓
+Final result
+
+⸻
+
+② Majority Voting（多数決）
+
+並列化の特殊パターン
+複数のエージェントが同じタスクを実行する
+
+目的：
+LLMの出力のばらつきを減らす
+
+例：
+Agent1 → answer A
+Agent2 → answer B
+Agent3 → answer A
+Final answer → A
+
+⸻
+
+③ Routing（ルーティング）
+
+ユーザーの質問を確認して、最適なエージェントにタスクを割り振る
+Router agent という振り分けエージェントが存在する
+
+例：
+User question
+↓
+Router agent
+↓
+Finance agent
+Legal agent
+Support agent
+
+⸻
+
+④ Sequential / Prompt Chaining（直列）
+
+エージェントをパイプラインとして使う
+Prompt chaining とも呼ばれる
+
+例：
+User query
+↓
+Agent1 (retrieve information)
+↓
+Agent2 (summarize)
+↓
+Agent3 (generate final response)
+
+⸻
+
+Multi-agent system では以下を担う Orchestrator が重要
+・タスク分解
+・エージェント選択
+・結果統合
+
+AWS ではこれを以下で実装することが多い
+・Bedrock Agents
+・Bedrock Flows
+```
+## Short/Long term memory
+```
+Short-term memory（短期記憶）
+
+現在のタスクや会話の文脈を理解するための一時的な記憶
+この会話の文脈を理解するための作業メモリ
+
+例：
+	•	直近のチャット履歴
+	•	ユーザーが今アップロードした画像
+	•	今渡されたコード
+	•	今のログ
+	•	現在のツール実行結果
+
+⸻
+
+Long-term memory（長期記憶）
+
+時間を超えて保持する知識やユーザー情報
+将来の推論のために保存された知識
+
+例：
+	•	過去の会話履歴
+	•	ユーザー設定
+	•	過去のインシデント
+	•	ドキュメント
+	•	ナレッジベース
+	•	ベクトルDB
+	•	RAGデータ
+```
+## Strands Agents
+```
+Strands Agents は AWS が開発した AI エージェント開発用の SDK
+
+⸻
+
+① Agent = LLM + Tools
+
+例：
+Agent
+↓
+Weather API
+Calculator
+Database
+Search
+
+⸻
+
+② Agent Loop
+
+エージェントが目標を達成するまで
+推論 → ツール実行 → 状態更新
+を繰り返す処理ループ
+基本的に 1つの LLM がループ内の処理を全て実行する
+
+イメージ：
+User goal
+↓
+Agent reasoning
+↓
+Tool selection
+↓
+Tool execution
+↓
+Observation
+↓
+Goal reached?
+   ├ Yes → Return answer
+   └ No → Loop again
+
+ループが止まる条件：
+Goal reached
+Max steps
+Error
+Human intervention
+
+Agent Loop は max_iterations などで制御する
+→ 無限ループ防止
+
+⸻
+
+③ Observation（観測）
+
+Agent Loop では Tool result を Observation として LLM に返す
+
+⸻
+
+④ Planning
+
+Agent はタスク分解を行う
+
+例：
+User goal
+↓
+Plan tasks
+↓
+Execute tasks
+```
+## AWS AgentCore
+```
+AgentCoreとは、
+
+AIエージェントの実行基盤（Agent runtime platform）
+→ Agent を実行・管理・接続するためのマネージド基盤
+
+主な役割
+	•	Agent の実行
+	•	ツール呼び出し
+	•	メモリ管理
+	•	API接続
+	•	セキュリティ
+	•	スケーリング
+
+AgentCoreの目的：
+
+Agentシステムは、LLM、RAG、ツール、API、状態管理、メモリ、セキュリティ、…
+の管理が複雑であり、これをマネージド化することで運用負荷を削減できる
+
+メリット：
+① エージェント開発の簡略化
+② メモリ管理
+③ ツール統合
+④ スケーリング
+
+⸻
+
+AgentCoreの主要コンポーネント
+
+1. AgentCore Runtime
+
+Agent を実行する環境、実行基盤
+
+特徴：
+	•	サーバレス
+	•	自動スケール
+	•	Bedrockエージェントを実行
+
+2. AgentCore Memory
+
+Agent の記憶を管理
+	•	Short-term memory（会話コンテキスト）
+	•	Long-term memory（ユーザ情報、履歴、知識）
+
+3. AgentCore Gateway
+
+ツール接続を統一
+	•	API
+	•	Lambda
+	•	DB
+	•	外部サービス
+
+MCP(Model Context Protocol) Tools：
+LLMがツールと会話するための標準プロトコル（AI用API規格）
+```
+## Human in the Loop（HITL）
+```
+Human in the Loop は、
+
+AIの意思決定プロセスに人間を介入させる仕組み
+→ AIだけで決定させない
+
+目的：
+	•	AIの誤判断防止
+	•	安全性の確保
+	•	品質向上
+	•	規制対応
+
+例：
+User request
+     ↓
+AI inference
+     ↓
+Human review (optional)
+     ↓
+Approve / Modify / Reject
+     ↓
+Final output
+
+HITLが必要なケース：
+① 高リスクが伴う判断
+	•	医療
+	•	金融
+	•	法務
+
+② 規制・コンプライアンス
+	•	ローン審査
+	•	保険審査
+
+③ 重要な業務決定
+	•	契約
+	•	支払い
+	•	人事
+
+④ モデル改善
+	•	人間のフィードバックを反映
+
+⑤ ConfidenceベースのHITL
+	•	Confidence gating (Confidence < threshold)
+```
+## Context Window
+```
+Context Windowとは、
+
+LLMが一度に読めるトークンの最大数
+context window = モデルが処理できる入力+出力トークンの上限
+
+つまり、以下をすべて合わせて context window 以内に収める必要がある
+Prompt
++ retrieved docs
++ conversation history
++ model output
+
+⸻
+
+context window の使用量を減らす方法（Token efficiency）
+
+① Conversation trimming
+古い会話を削除
+
+② Conversation summarization
+会話を要約
+
+③ Retrieval filtering
+RAG で TopK retrieval を使用する
+
+④ Prompt compression
+冗長なプロンプト削減
+```

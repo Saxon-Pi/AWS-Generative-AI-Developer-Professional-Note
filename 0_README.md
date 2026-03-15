@@ -18,3 +18,5 @@ AWS Certified Generative AI Developer - Professional の受験勉強メモ
 - RAG を活用したチャットアプリを作成して仕組みとアーキテクチャを理解する
 - センサ系と連動させた AI システムを作りたい (温度、湿度センサ→IoT Coreとか？)
 - AI Agent を活用したシステム構築
+- Strands SDK + Agent Core + Cognito を使用した AI アプリ開発
+→ Bedrock で Agents 作成 → `agent core import agent` で Agent Core インポート？
