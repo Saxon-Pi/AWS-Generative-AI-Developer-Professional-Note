@@ -1783,3 +1783,77 @@ Agent の記憶を管理
 MCP(Model Context Protocol) Tools：
 LLMがツールと会話するための標準プロトコル（AI用API規格）
 ```
+## Human in the Loop（HITL）
+```
+Human in the Loop は、
+
+AIの意思決定プロセスに人間を介入させる仕組み
+→ AIだけで決定させない
+
+目的：
+	•	AIの誤判断防止
+	•	安全性の確保
+	•	品質向上
+	•	規制対応
+
+例：
+User request
+     ↓
+AI inference
+     ↓
+Human review (optional)
+     ↓
+Approve / Modify / Reject
+     ↓
+Final output
+
+HITLが必要なケース：
+① 高リスクが伴う判断
+	•	医療
+	•	金融
+	•	法務
+
+② 規制・コンプライアンス
+	•	ローン審査
+	•	保険審査
+
+③ 重要な業務決定
+	•	契約
+	•	支払い
+	•	人事
+
+④ モデル改善
+	•	人間のフィードバックを反映
+
+⑤ ConfidenceベースのHITL
+	•	Confidence gating (Confidence < threshold)
+```
+## Context Window
+```
+Context Windowとは、
+
+LLMが一度に読めるトークンの最大数
+context window = モデルが処理できる入力+出力トークンの上限
+
+つまり、以下をすべて合わせて context window 以内に収める必要がある
+Prompt
++ retrieved docs
++ conversation history
++ model output
+
+⸻
+
+context window の使用量を減らす方法（Token efficiency）
+
+① Conversation trimming
+古い会話を削除
+
+② Conversation summarization
+会話を要約
+
+③ Retrieval filtering
+RAG で TopK retrieval を使用する
+
+④ Prompt compression
+冗長なプロンプト削減
+```
