@@ -1857,3 +1857,38 @@ RAG で TopK retrieval を使用する
 ④ Prompt compression
 冗長なプロンプト削減
 ```
+## Cache for GenAI
+```
+Semantic Cache
+
+意味が近い質問なら同じ回答を再利用するキャッシュ
+
+仕組み：
+User prompt
+↓
+Embedding
+↓
+Vector search
+↓
+類似プロンプトを検索
+↓
+キャッシュにあれば回答を返す
+↓
+なければLLM実行
+
+⸻
+
+Prompt Cache
+
+完全一致のプロンプトに対するキャッシュ
+Embedding が不要だが、表現が違うとヒットしない
+
+仕組み：
+User prompt
+↓
+cache lookup
+↓
+完全一致ならキャッシュ返す
+↓
+なければLLM実行
+```
