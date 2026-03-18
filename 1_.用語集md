@@ -1910,3 +1910,16 @@ Amazon Organization の SCP で
 ただし、SCP で複数リージョンの利用を許可している場合は、
 クロスリージョン推論 = 許可されたリージョン内で自動ルーティング となる
 ```
+## GADP における SageMaker 出題ポイント
+```
+出題リソース
+
+・SageMaker Studio：機械学習開発の統合開発環境（IDE）
+・SageMaker Endpoint：モデルをAPIとして公開
+・SageMaker Processing：データの前処理・後処理を行うバッチ処理基盤
+・SageMaker Pipelines：AI ワークフロー
+・Data Wrangler：データ前処理の設計ツール（GUIベース）
+
+Data Wrangler = 前処理ロジックを作る
+Processing    = 前処理ロジックを実行する
+```
