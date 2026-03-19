@@ -1921,5 +1921,8 @@ Amazon Organization の SCP で
 ・Data Wrangler：データ前処理の設計ツール（GUIベース）
 
 Data Wrangler = 前処理ロジックを作る
+→ データ分析 / データ可視化 / ノーコード / 変換ロジック
+
 Processing    = 前処理ロジックを実行する
+→ 大規模データ処理 / バッチ処理 / 前処理の本番実行 / スクリプト実行
 ```
