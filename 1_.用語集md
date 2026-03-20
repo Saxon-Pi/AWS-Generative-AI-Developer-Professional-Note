@@ -1926,3 +1926,52 @@ Data Wrangler = 前処理ロジックを作る
 Processing    = 前処理ロジックを実行する
 → 大規模データ処理 / バッチ処理 / 前処理の本番実行 / スクリプト実行
 ```
+## AWS AppConfig
+```
+AppConfig とは、
+
+アプリケーション設定を「安全に配布・更新する」サービス
+パラメータの「安全なデプロイ」が主な目的
+
+S3 や ParameterStore からパラメータを取得してアプリに反映できる
+
+S3 / Parameter Store / Secrets Manager
+        ↓
+     AppConfig
+        ↓
+   アプリケーション
+
+⸻
+
+AppConfigの強み
+
+① 段階的デプロイ
+→ 変更をいきなり全体に反映しない
+
+② バリデーション
+→ 設定値のチェック（JSON schema、Lambda validation）
+
+③ 自動ロールバック
+
+④ リアルタイム更新
+→ アプリの再デプロイ不要
+
+⸻
+
+AIシステムとの関係（使いどころ）
+
+① モデル切り替え
+model_id = claude-v2
+↓
+model_id = claude-v3
+
+② プロンプト管理
+A/Bテスト可能
+
+③ Feature flag
+コードの再デプロイや再起動なしに、本番環境で機能のオン/オフを動的に切り替えられる
+
+④ 推論パラメータ
+temperature = 0.2
+top_p = 0.9
+```
