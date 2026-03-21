@@ -1975,3 +1975,99 @@ A/Bテスト可能
 temperature = 0.2
 top_p = 0.9
 ```
+## LLM の性能評価
+```
+LLM の評価は、大きく2種類ある
+
+① 人間ベース（主観）
+ground truth（模範解答）を用意する
+
+評価観点：
+・正確性（Correctness）
+・関連性（Relevance）
+・完全性（Completeness）
+・有用性（Helpfulness）
+・一貫性（Coherence）
+・安全性（Safety）
+
+② 自動評価（客観）
+別のLLMに「この回答は良いか？」を判断させる
+
+特徴：
+・スケーラブル
+・主観評価を自動化
+
+注意点：
+バイアスがある
+評価モデルに依存
+
+③ ハイブリッド（人間＋モデル）
+人間で基準を作り、LLM に大量評価させる
+
+⸻
+
+自動評価指標
+
+ROUGE / BLEU = 文字列一致ベース
+BERTScore    = 意味ベース
+
+🔵 ROUGE（Recall-Oriented）：
+模範解答に含まれる単語を、どれだけAIが拾えているか
+→ 網羅性（漏れの少なさ）を評価
+→ n-gram一致率（Recall重視）
+
+特徴：
+・要約タスクに強い
+・言い換えに弱い（意味は見ていない）
+
+模範解答：
+The cat is on the mat
+
+AI 出力：
+The cat is on mat
+
+一致している単語：
+The cat is on mat
+→ 高評価
+
+🔵 BLEU（Precision-Oriented）：
+AIの出力がどれだけ正確に一致しているか
+→ 正確性（余計なこと言ってないか）を評価
+→ n-gram一致率（Precision）
+
+特徴：
+・正確に一致することを評価
+・翻訳タスク向け
+
+模範解答：
+The cat is on the mat
+
+AI 出力：
+The cat is on the mat and happy
+
+一致している単語：
+The cat is on mat
+→ ROUGE 的には高評価（模範解答を拾ってる）が、BLEU 的には低評価（余計な情報を出力している）
+
+🔵 BERTScore（Semantic）：
+意味がどれだけ近いかを評価（semantic similarity）
+→ Embeddingを使用する
+
+特徴：
+・意味ベースの評価ができる
+・模範回答の言い換えはOK
+・計算コストが高い
+
+例：
+文章 → ベクトル化
+↓
+類似度（cosineなど）計算
+
+模範解答：
+The cat is on the mat
+
+AI 出力：
+A feline is sitting on a rug
+→ ROUGE / BLEU 的には低評価
+→ BERTScore 的には 意味が近い → 高評価
+```
