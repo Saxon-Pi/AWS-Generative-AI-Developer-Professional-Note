@@ -129,3 +129,203 @@ https://docs.aws.amazon.com/ja_jp/bedrock/latest/userguide/prompt-management.htm
 
 最重要：
 「プロンプトの構造を統一・管理するなら Prompt Management」
+
+---
+
+# Bedrock Model Access Policies と SCP
+
+## 概要
+- Bedrock利用のガバナンスは複数レイヤーで制御する
+- Model Access Policies と SCP を組み合わせて統制する
+
+---
+
+## 全体構造
+
+SCP（最上位ガードレール）
+↓
+IAM（ユーザー/ロール権限）
+↓
+Model Access Policies（モデル単位制御）
+↓
+モデル利用
+
+---
+
+## Model Access Policies
+
+### 役割
+- Bedrock内でどのモデルを使えるか制御
+
+### 特徴
+- モデル単位で許可/拒否
+- Bedrockの機能として提供
+
+### 例
+- Claudeは許可
+- Titanは禁止
+
+---
+
+## SCP（Service Control Policy）
+
+### 役割
+- 組織全体の利用上限ルールを定義
+
+### 特徴
+- IAMより強い制約
+- OU/アカウント単位で適用
+- 許可ではなく「上限（ガードレール）」を定義
+
+### 制御例
+- Bedrockの利用禁止
+- 特定リージョンのみ許可
+- 特定APIの利用制限
+
+---
+
+## 重要な関係
+
+- SCPはBedrock利用の可否を決める
+- Model Access Policiesはモデル単位の利用を決める
+
+---
+
+## 動作イメージ
+
+1. SCPでBedrock利用が許可されているか確認
+2. IAMでユーザーの実行権限を確認
+3. Model Access Policiesでモデル利用可否を確認
+4. すべてOKなら推論可能
+
+---
+
+## ケース別
+
+### ケース①
+SCP：Bedrock禁止
+Model Access：Claude許可
+→ 利用不可
+
+### ケース②
+SCP：Bedrock許可
+Model Access：Claude禁止
+→ 利用不可
+
+### ケース③
+SCP：Bedrock許可
+Model Access：Claude許可
+→ 利用可能
+
+---
+
+## 試験ポイント
+
+- 「組織全体の統制」→ SCP
+- 「モデル単位の制御」→ Model Access Policies
+- 「ガバナンス強化」→ 両方併用
+- 「コンプライアンス」→ Organizations + Bedrock
+
+---
+
+## よくある誤り
+
+- SCPでモデル単位制御 → NG
+- Model Accessだけで十分 → NG
+- IAMだけで統制可能 → NG
+
+---
+
+## 一言まとめ
+
+- SCP = 利用の枠を決める
+- Model Access Policies = 使えるモデルを決める
+
+---
+
+# Bedrock AgentCore ツールまとめノート
+
+## 概要
+- AgentCore = エージェントに機能（能力）を追加するツール群
+- 「何をさせたいか」でツールを選ぶのがポイント
+
+---
+
+## ツール一覧と役割
+
+### 1. Browser Tool
+- 役割：外部Webアクセス
+- できること：
+  - Webページ取得
+  - 最新情報の取得
+  - 内容の要約
+- キーワード：最新情報 / Web / 論文 / ニュース
+
+---
+
+### 2. Code Interpreter
+- 役割：コード実行（主にPython）
+- できること：
+  - データ分析
+  - 統計計算
+  - グラフ生成
+  - ファイル処理（CSV等）
+- キーワード：分析 / 計算 / 可視化 / グラフ
+
+---
+
+### 3. Gateway
+- 役割：外部API連携の入口
+- できること：
+  - SageMakerエンドポイント呼び出し
+  - ComprehendなどのAPI呼び出し
+  - 社内API統合
+- キーワード：API連携 / エンドポイント / 外部サービス
+
+---
+
+### 4. Memory
+- 役割：長期記憶（コンテキスト保持）
+- できること：
+  - 会話履歴保存
+  - ユーザ状態の保持
+  - セッション継続
+- キーワード：履歴 / コンテキスト / セッション
+
+---
+
+### 5. Identity
+- 役割：認証・認可管理
+- できること：
+  - ユーザ認証
+  - アクセス制御
+  - ロール管理
+- キーワード：認証 / セキュリティ / 権限
+
+---
+
+## 使い分けまとめ
+
+- Webから情報取得 → Browser Tool
+- 計算・分析・グラフ → Code Interpreter
+- API連携 → Gateway
+- 会話の記憶 → Memory
+- 認証・アクセス制御 → Identity
+
+---
+
+## 試験ポイント
+
+- 「最新情報」→ Browser Tool
+- 「分析・統計」→ Code Interpreter
+- 「API呼び出し」→ Gateway
+- 「履歴保持」→ Memory
+- 「認証」→ Identity
+
+---
+
+## 一言まとめ
+
+- AgentCore = エージェントに「能力」を追加するツール群
+
+---

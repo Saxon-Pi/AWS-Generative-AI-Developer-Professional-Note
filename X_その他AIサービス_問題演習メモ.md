@@ -109,3 +109,197 @@
 
 - Q Developer = コードを書くAI
 - Q Business = 社内情報を探すAI
+
+---
+
+# Amazon Augmented AI（A2I）
+
+## 概要
+- ML推論結果に人間レビューを組み込むサービス
+- Human-in-the-Loop（HITL）を実現するための基盤
+- 品質・説明責任・コンプライアンス対応に重要
+
+---
+
+## できること
+
+- 人間レビューのワークフロー化
+- 低信頼予測のみレビューに回す
+- 全件レビュー（監査用途）
+- 承認 / 差し戻しの管理
+- ワークフォース（作業者）の管理
+
+---
+
+## Human Review Loop
+
+モデル推論  
+↓  
+条件判定（信頼度など）  
+↓  
+A2Iで人間レビュー  
+↓  
+結果確定（承認 / 修正）  
+
+---
+
+## ワークフォース
+
+- Private（社内）
+- Vendor（外部委託）
+- Amazon Mechanical Turk
+
+---
+
+## 利用シーン
+
+- 保険審査・クレーム対応
+- 医療文書レビュー
+- メール生成の確認
+- コンプライアンスチェック
+- OCR結果の確認
+
+---
+
+## Bedrockとの関係
+
+- Bedrockとネイティブ統合された中心機能ではない
+- Bedrockの出力をA2Iに渡してレビュー可能
+- Step Functions / Lambdaで連携する構成が一般的
+
+---
+
+## Bedrockとの違い
+
+|用途|サービス|
+|--|--|
+生成|Bedrock|
+人間レビュー|A2I|
+ワークフロー制御|Step Functions|
+
+---
+
+## 試験ポイント
+
+- 「人間による確認」→ A2I
+- 「承認・差し戻し」→ A2I
+- 「HITL」→ A2I
+- 「生成 → 承認フロー」→ Step Functions + A2I
+
+---
+
+## よくある誤り
+
+- Bedrockが人間レビューを直接管理する → NG
+- A2Iがモデル推論を行う → NG
+- Step FunctionsだけでレビューUIまで提供される → NG
+
+---
+
+## 一言まとめ
+
+- A2I = 人間レビューをシステムとして組み込むサービス
+
+---
+
+# Amazon Lex と Synonyms（スロット改善）
+
+## 概要
+- Amazon Lex はルールベース寄りの自然言語理解サービス
+- 意味理解（Embedding）ではなく「定義済み値 + synonyms」で解釈する
+- 類義語を認識させるには synonyms の設定が重要
+
+---
+
+## 問題の本質
+
+### ユーザー入力
+- thrill-seeking
+- sightseeing
+- chill
+
+### 既存カテゴリ
+- adventure
+- culture
+- relaxation
+
+→ 意味は近いが文字列が一致しないため認識できない
+
+---
+
+## なぜ起きるか
+
+- Lexは意味ベースではない
+- 文字列一致・辞書ベースのマッチング
+- 類義語を自動で理解しない
+
+---
+
+## 解決策：Synonyms
+
+### custom slot type
+
+例：
+
+Slot: vacation_type
+
+値（canonical values）:
+- relaxation
+- adventure
+- culture
+
+synonyms:
+- relaxation → chill
+- adventure → thrill-seeking
+- culture → sightseeing
+
+---
+
+## 効果
+
+- chill → relaxation に変換される
+- thrill-seeking → adventure に変換される
+- 意味の近い入力を正しく処理できる
+
+---
+
+## なぜこれが最適か
+
+問題の制約：
+- Lambda変更不可
+- DB変更不可
+- 即時対応必要
+
+→ Lex設定のみで解決できるのが唯一の手段
+
+---
+
+## NG対応
+
+- TitanなどEmbedding導入 → 即時不可
+- Lambdaで変換 → 制約違反
+- DB側修正 → 制約違反
+
+---
+
+## 試験ポイント
+
+- 「似た意味が認識されない」→ synonyms
+- 「slot type」→ 値と類義語の管理
+- 「即時対応」→ 設定変更で解決
+
+---
+
+## Generative AIとの違い
+
+|項目|Lex|Bedrock|
+|--|--|--|
+理解方法|辞書ベース|意味ベース（Embedding）|
+柔軟性|低|高|
+類義語対応|手動|自動（ある程度）|
+
+---
+
+## 一言まとめ
+
+- Lexは意味を理解しないため、類義語はsynonymsで定義する必要がある
