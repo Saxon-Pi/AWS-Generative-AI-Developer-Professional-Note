@@ -454,3 +454,76 @@ Greengrassでデバイスにデプロイ
 - 量子化 = 軽くする
 - Neo = 速く動くようにする
 - Greengrass = 現場で動かす
+
+---
+
+# SageMakerにおける Blue/Green と Canary
+
+## 概要
+- Blue/Green = 新旧の環境（fleet）を並行に持つデプロイ方式
+- Canary = トラフィックを段階的に新環境へ移す“切り替え方法”
+- SageMakerでは「Blue/Greenの上でCanaryを使う」のが基本
+
+---
+
+## Blue/Green Deployment
+
+### 構成
+- Blue fleet：旧モデル（本番稼働中）
+- Green fleet：新モデル（新規デプロイ）
+
+### 特徴
+- 環境を完全に分離
+- 即時切替 or 段階的切替が可能
+- 失敗時はBlueへ即ロールバック
+
+---
+
+## Canary Traffic Shifting（SageMaker）
+
+### 定義
+- 新しいGreen fleetへ少量トラフィックを流して検証し、問題なければ全量切替する方式
+
+### 流れ
+1. 10%をGreenへ（残り90%はBlue）
+2. CloudWatchでレイテンシ/エラー率を監視（ベーキング期間）
+3. 問題なければ100%をGreenへ
+4. 異常時は自動でBlueへロールバック
+
+---
+
+## 重要ポイント（試験）
+
+- Canaryは「モデル混在」ではなく「トラフィック制御」
+- SageMakerのCanaryはBlue/Greenの一部として使う
+- 安全なロールアウト＋自動ロールバックに最適
+
+---
+
+## よくある誤解
+
+- ❌ Canary = 単一fleet内でモデル混在（SageMakerでは基本そうしない）
+- ⭕ Canary = 新旧fleet間でトラフィックを段階的に配分
+
+---
+
+## 他のシフト方式
+
+- All-at-once：一気に100%切替
+- Linear：一定割合ずつ段階的に増加
+- Canary：少量→問題なければ一気に全量
+
+---
+
+## 使い分け
+
+- 高リスク変更 → Canary
+- 中リスク → Linear
+- 低リスク → All-at-once
+
+---
+
+## 一言まとめ
+
+- Blue/Green = 環境を分ける
+- Canary = トラフィックを少しずつ移す

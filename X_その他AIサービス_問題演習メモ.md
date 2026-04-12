@@ -199,3 +199,107 @@ A2Iで人間レビュー
 ## 一言まとめ
 
 - A2I = 人間レビューをシステムとして組み込むサービス
+
+---
+
+# Amazon Lex と Synonyms（スロット改善）
+
+## 概要
+- Amazon Lex はルールベース寄りの自然言語理解サービス
+- 意味理解（Embedding）ではなく「定義済み値 + synonyms」で解釈する
+- 類義語を認識させるには synonyms の設定が重要
+
+---
+
+## 問題の本質
+
+### ユーザー入力
+- thrill-seeking
+- sightseeing
+- chill
+
+### 既存カテゴリ
+- adventure
+- culture
+- relaxation
+
+→ 意味は近いが文字列が一致しないため認識できない
+
+---
+
+## なぜ起きるか
+
+- Lexは意味ベースではない
+- 文字列一致・辞書ベースのマッチング
+- 類義語を自動で理解しない
+
+---
+
+## 解決策：Synonyms
+
+### custom slot type
+
+例：
+
+Slot: vacation_type
+
+値（canonical values）:
+- relaxation
+- adventure
+- culture
+
+synonyms:
+- relaxation → chill
+- adventure → thrill-seeking
+- culture → sightseeing
+
+---
+
+## 効果
+
+- chill → relaxation に変換される
+- thrill-seeking → adventure に変換される
+- 意味の近い入力を正しく処理できる
+
+---
+
+## なぜこれが最適か
+
+問題の制約：
+- Lambda変更不可
+- DB変更不可
+- 即時対応必要
+
+→ Lex設定のみで解決できるのが唯一の手段
+
+---
+
+## NG対応
+
+- TitanなどEmbedding導入 → 即時不可
+- Lambdaで変換 → 制約違反
+- DB側修正 → 制約違反
+
+---
+
+## 試験ポイント
+
+- 「似た意味が認識されない」→ synonyms
+- 「slot type」→ 値と類義語の管理
+- 「即時対応」→ 設定変更で解決
+
+---
+
+## Generative AIとの違い
+
+|項目|Lex|Bedrock|
+|--|--|--|
+理解方法|辞書ベース|意味ベース（Embedding）|
+柔軟性|低|高|
+類義語対応|手動|自動（ある程度）|
+
+---
+
+## 一言まとめ
+
+- Lexは意味を理解しないため、類義語はsynonymsで定義する必要がある
