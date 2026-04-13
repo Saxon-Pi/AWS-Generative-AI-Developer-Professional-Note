@@ -303,3 +303,82 @@ synonyms:
 ## 一言まとめ
 
 - Lexは意味を理解しないため、類義語はsynonymsで定義する必要がある
+
+---
+
+# Comprehendにおける Offsets / Labels の整理
+
+## 概要
+- Offsets / Labels は「独立した機能」ではない
+- 各分析機能の「出力項目（属性）」として返される情報
+
+---
+
+## 全体構造
+
+### ① 分析機能（何をするか）
+- Entity Detection
+- PII Detection
+- Sentiment Analysis
+- Key Phrase Detection
+- Syntax Analysis
+- Custom Classification
+
+---
+
+### ② 出力（何が返るか）
+
+- Labels（Type）
+  - エンティティの種類
+  - 例：PERSON, LOCATION, EMAIL など
+
+- Offsets（BeginOffset / EndOffset）
+  - テキスト内の位置情報
+  - 例：開始位置・終了位置
+
+---
+
+## イメージ
+
+Entity Detection の出力例：
+
+```json
+{
+  "Text": "John",
+  "Type": "PERSON",      ← Labels
+  "BeginOffset": 0,      ← Offsets
+  "EndOffset": 4
+}
+```
+
+---
+
+## 今回の問題のポイント
+
+### 要件
+- PIIの位置が必要 → Offsets
+- PIIの種類が必要 → Labels
+
+---
+
+## 試験での考え方
+
+- 「どの分析機能か」ではなく
+- 「どんな出力が必要か」で判断する
+
+---
+
+## よくあるトリック
+
+- 「Offsets analysis」
+- 「Labels analysis」
+
+→ 実際には存在しない“機能名風の表現”
+
+---
+
+## 一言まとめ
+
+- Offsets = 位置
+- Labels = 種類
+- どちらも「分析結果の属性」
