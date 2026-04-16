@@ -530,3 +530,103 @@ Model Access：Claude許可
 
 - モデル評価 = 「大量のプロンプトを使ったテスト」
 - 制限がある場合は「分割して実行」
+
+---
+
+# Bedrock Agent Trace機能
+
+## 概要
+- Bedrock Agentのtrace機能は、エージェントの内部処理（思考プロセス）を可視化するための仕組み
+- enableTrace = true で有効化
+- デバッグ・監視・品質改善に必須
+
+---
+
+## Traceの3つの構成
+
+### ① PreProcessingTrace
+
+#### 役割
+- ユーザー入力の解釈
+- 意図（Intent）の理解
+
+#### 何が分かる？
+- 入力がどう解釈されたか
+- タスク分類結果
+
+#### 例
+ユーザー入力：  
+「この顧客に適用される規制は？」  
+
+↓  
+PreProcessingTrace：  
+- intent: regulation_lookup  
+- entities: customer_type  
+
+---
+
+### ② OrchestrationTrace
+
+#### 役割
+- エージェントの推論と行動
+
+#### 何が分かる？
+- ナレッジベース検索内容
+- Action Groupの呼び出し
+- 使用されたパラメータ
+- 処理の順序
+
+#### 例
+- KB検索クエリ: "顧客 規制 金融"
+- 呼び出しAPI: getCustomerContext
+- パラメータ: customer_id=123
+
+---
+
+### ③ PostProcessingTrace
+
+#### 役割
+- 最終回答の生成
+
+#### 何が分かる？
+- 取得情報をどうまとめたか
+- 応答生成ロジック
+
+#### 例
+- 取得した規制情報を統合
+- 最終回答を生成
+
+---
+
+## 使いどころ
+
+### デバッグ
+- なぜ誤った回答になったか分析
+
+### ハルシネーション検出
+- 不正確な推論箇所を特定
+
+### 品質改善
+- プロンプトやツール設計の改善
+
+### 監査・説明責任
+- 判断根拠の可視化
+
+---
+
+## 試験ポイント
+
+- 「内部推論を見たい」→ Trace
+- 「どのツールを使ったか知りたい」→ OrchestrationTrace
+- 「入力解釈を確認したい」→ PreProcessingTrace
+- 「出力生成の過程を知りたい」→ PostProcessingTrace
+
+---
+
+## 一言まとめ
+
+- PreProcessing = 入力理解
+- Orchestration = 思考と行動（最重要）
+- PostProcessing = 出力生成
+
+👉 Trace = エージェントの思考ログ
