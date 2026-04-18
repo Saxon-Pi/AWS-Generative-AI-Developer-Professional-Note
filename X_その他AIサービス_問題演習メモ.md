@@ -382,3 +382,123 @@ Entity Detection の出力例：
 - Offsets = 位置
 - Labels = 種類
 - どちらも「分析結果の属性」
+
+---
+
+# LLMアーキテクチャ比較 （Bedrock / LangChain / LangGraph / Step Functions）
+
+## 概要
+LLMアプリ開発でよく使う4つの選択肢：
+- Bedrock Agents（AWSマネージド）
+- LangChain（OSSフレームワーク）
+- LangGraph（エージェント拡張）
+- Step Functions（AWSワークフロー）
+
+👉 それぞれ役割が違うのが重要
+
+---
+
+## 全体の位置づけ
+
+| レイヤ | ツール | 役割 |
+|-------|------|------|
+| インフラ | AWS | データ・実行基盤 |
+| LLM | Bedrock | モデル実行 |
+| アプリロジック | LangChain | RAG / ツール連携 |
+| エージェント制御 | LangGraph | 状態付き推論 |
+| 業務ワークフロー | Step Functions | システム連携 |
+
+---
+
+## Bedrock Agents
+- AWS完全マネージド
+- 簡単にエージェント構築
+- Action GroupでAPI呼び出し
+
+向いている：
+- FAQボット
+- シンプルRAG
+
+弱点：
+- 柔軟性が低い
+
+---
+
+## LangChain
+- OSSのLLMフレームワーク
+- RAG / ツール連携
+
+できること：
+- embedding / retrieval
+- LLM切替
+- ツール実行
+
+👉 LLMアプリのロジック層
+
+---
+
+## LangGraph
+- LangChain拡張
+- 状態付きエージェント
+
+できること：
+- state管理
+- 分岐・ループ
+- checkpoint
+- rollback / replay
+
+👉 エージェントの本格制御
+
+---
+
+## Step Functions
+- AWSワークフロー
+- ステートマシン
+
+できること：
+- Lambda連携
+- retry / error handling
+- 並列処理
+
+👉 業務プロセス制御
+
+---
+
+## 比較
+
+| 観点 | Bedrock | LangChain | LangGraph | Step Functions |
+|------|--------|-----------|-----------|----------------|
+| 難易度 | 低 | 中 | 高 | 中 |
+| 柔軟性 | 低 | 高 | 非常に高い | 高 |
+| 状態管理 | 弱い | 弱い | 強い | 強い |
+| LLM特化 | ◎ | ◎ | ◎ | △ |
+| AWS統合 | ◎ | ○ | ○ | ◎ |
+
+---
+
+## 使い分け
+
+簡単に作る → Bedrock  
+柔軟なRAG → LangChain  
+エージェント制御 → LangGraph  
+業務フロー → Step Functions  
+
+---
+
+## 試験ポイント
+
+RAG → LangChain  
+state / graph → LangGraph  
+workflow / retry → Step Functions  
+簡単なagent → Bedrock  
+
+---
+
+## まとめ
+
+LangChain = LLMアプリ  
+LangGraph = エージェント制御  
+Step Functions = 業務フロー  
+Bedrock = モデル実行  
+
+👉 LLM中心か業務中心かで判断する

@@ -630,3 +630,80 @@ PreProcessingTrace：
 - PostProcessing = 出力生成
 
 👉 Trace = エージェントの思考ログ
+
+---
+
+# Bedrock Guardrail強制（IAM）
+
+## 概要
+Bedrock Guardrailsは、モデル出力の安全性やコンプライアンスを担保する仕組み
+
+ただし、アプリ側でGuardrailを付け忘れると無効化されるリスクがあるため、
+IAMポリシーで強制する必要がある
+
+---
+
+## コア概念
+
+### bedrock:GuardrailIdentifier
+
+- Guardrailがリクエストに含まれているかを判定するIAM条件キー
+- Guardrailが無いリクエストを拒否可能
+- 特定のGuardrailのみ許可することも可能
+
+---
+
+## できること
+
+### ① Guardrail必須化
+- Guardrailなし → 拒否
+- Guardrailあり → 許可
+
+### ② バイパス防止
+- 開発者が直接APIを叩いても回避できない
+
+### ③ 対象API
+- InvokeModel
+- Converse
+- Streaming系API
+
+---
+
+## メリット
+
+### 最小運用オーバーヘッド
+- IAMだけで制御可能
+- API GatewayやLambda不要
+
+### 強制力
+- アプリケーション側で無効化できない
+
+### セキュリティ
+- 中央集権的なガバナンスが可能
+
+---
+
+## 他の方法との比較
+
+### API Gateway + Lambda
+- 実現可能だが運用コストが高い
+
+### Secrets Manager
+- Guardrail IDを渡すだけで強制できない
+
+### Prompt Router
+- ルーティング用途であり、Guardrail強制には不適
+
+---
+
+## 試験ポイント
+
+- Guardrailを必須化したい → IAM + bedrock:GuardrailIdentifier
+- バイパスさせたくない → IAM制御
+- 最小運用 → IAM一択
+
+---
+
+## まとめ
+
+Guardrail必須化は IAM の bedrock:GuardrailIdentifier で強制する
