@@ -1,3 +1,22 @@
+## 目次
+- [チャンク分割とオーバーラップ](#チャンク分割とオーバーラップ)
+- [k-NN と ANN（Approximate Nearest Neighbor）](#k-nn-と-annapproximate-nearest-neighbor)
+- [LLM評価指標まとめ（Perplexity / BLEU / ROUGE / BERTScore）](#llm評価指標まとめperplexity--bleu--rouge--bertscore)
+- [モデルドリフト / データドリフト / 概念ドリフト](#モデルドリフト--データドリフト--概念ドリフト)
+- [デプロイ戦略まとめ（Canary / Blue-Green / Rolling）](#デプロイ戦略まとめcanary--blue-green--rolling)
+- [SHAP（Shapley Additive Explanations）](#shapshapley-additive-explanations)
+- [ゴールデンデータ（LLM評価）](#ゴールデンデータllm評価)
+- [Prompt Caching と Cache Checkpoint](#prompt-caching-と-cache-checkpoint)
+- [Word2Vec と n-gram の関係](#word2vec-と-n-gram-の関係)
+- [human-validated dataset](#human-validated-dataset)
+- [A/Bテスト（AIモデル評価）](#abテストaiモデル評価)
+- [DeepAR](#deepar)
+- [SMOTE（Synthetic Minority Oversampling Technique）](#smotesynthetic-minority-oversampling-technique)
+- [RAGチャンク戦略： Semantic vs Hierarchical](#ragチャンク戦略-semantic-vs-hierarchical)
+- [RLHF（Reinforcement Learning from Human Feedback）](#rlhfreinforcement-learning-from-human-feedback)
+
+---
+
 # チャンク分割とオーバーラップ
 
 ## 概要
