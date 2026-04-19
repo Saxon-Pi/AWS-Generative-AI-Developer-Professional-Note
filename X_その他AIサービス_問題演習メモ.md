@@ -303,3 +303,202 @@ synonyms:
 ## 一言まとめ
 
 - Lexは意味を理解しないため、類義語はsynonymsで定義する必要がある
+
+---
+
+# Comprehendにおける Offsets / Labels の整理
+
+## 概要
+- Offsets / Labels は「独立した機能」ではない
+- 各分析機能の「出力項目（属性）」として返される情報
+
+---
+
+## 全体構造
+
+### ① 分析機能（何をするか）
+- Entity Detection
+- PII Detection
+- Sentiment Analysis
+- Key Phrase Detection
+- Syntax Analysis
+- Custom Classification
+
+---
+
+### ② 出力（何が返るか）
+
+- Labels（Type）
+  - エンティティの種類
+  - 例：PERSON, LOCATION, EMAIL など
+
+- Offsets（BeginOffset / EndOffset）
+  - テキスト内の位置情報
+  - 例：開始位置・終了位置
+
+---
+
+## イメージ
+
+Entity Detection の出力例：
+
+```json
+{
+  "Text": "John",
+  "Type": "PERSON",      ← Labels
+  "BeginOffset": 0,      ← Offsets
+  "EndOffset": 4
+}
+```
+
+---
+
+## 今回の問題のポイント
+
+### 要件
+- PIIの位置が必要 → Offsets
+- PIIの種類が必要 → Labels
+
+---
+
+## 試験での考え方
+
+- 「どの分析機能か」ではなく
+- 「どんな出力が必要か」で判断する
+
+---
+
+## よくあるトリック
+
+- 「Offsets analysis」
+- 「Labels analysis」
+
+→ 実際には存在しない“機能名風の表現”
+
+---
+
+## 一言まとめ
+
+- Offsets = 位置
+- Labels = 種類
+- どちらも「分析結果の属性」
+
+---
+
+# LLMアーキテクチャ比較 （Bedrock / LangChain / LangGraph / Step Functions）
+
+## 概要
+LLMアプリ開発でよく使う4つの選択肢：
+- Bedrock Agents（AWSマネージド）
+- LangChain（OSSフレームワーク）
+- LangGraph（エージェント拡張）
+- Step Functions（AWSワークフロー）
+
+👉 それぞれ役割が違うのが重要
+
+---
+
+## 全体の位置づけ
+
+| レイヤ | ツール | 役割 |
+|-------|------|------|
+| インフラ | AWS | データ・実行基盤 |
+| LLM | Bedrock | モデル実行 |
+| アプリロジック | LangChain | RAG / ツール連携 |
+| エージェント制御 | LangGraph | 状態付き推論 |
+| 業務ワークフロー | Step Functions | システム連携 |
+
+---
+
+## Bedrock Agents
+- AWS完全マネージド
+- 簡単にエージェント構築
+- Action GroupでAPI呼び出し
+
+向いている：
+- FAQボット
+- シンプルRAG
+
+弱点：
+- 柔軟性が低い
+
+---
+
+## LangChain
+- OSSのLLMフレームワーク
+- RAG / ツール連携
+
+できること：
+- embedding / retrieval
+- LLM切替
+- ツール実行
+
+👉 LLMアプリのロジック層
+
+---
+
+## LangGraph
+- LangChain拡張
+- 状態付きエージェント
+
+できること：
+- state管理
+- 分岐・ループ
+- checkpoint
+- rollback / replay
+
+👉 エージェントの本格制御
+
+---
+
+## Step Functions
+- AWSワークフロー
+- ステートマシン
+
+できること：
+- Lambda連携
+- retry / error handling
+- 並列処理
+
+👉 業務プロセス制御
+
+---
+
+## 比較
+
+| 観点 | Bedrock | LangChain | LangGraph | Step Functions |
+|------|--------|-----------|-----------|----------------|
+| 難易度 | 低 | 中 | 高 | 中 |
+| 柔軟性 | 低 | 高 | 非常に高い | 高 |
+| 状態管理 | 弱い | 弱い | 強い | 強い |
+| LLM特化 | ◎ | ◎ | ◎ | △ |
+| AWS統合 | ◎ | ○ | ○ | ◎ |
+
+---
+
+## 使い分け
+
+簡単に作る → Bedrock  
+柔軟なRAG → LangChain  
+エージェント制御 → LangGraph  
+業務フロー → Step Functions  
+
+---
+
+## 試験ポイント
+
+RAG → LangChain  
+state / graph → LangGraph  
+workflow / retry → Step Functions  
+簡単なagent → Bedrock  
+
+---
+
+## まとめ
+
+LangChain = LLMアプリ  
+LangGraph = エージェント制御  
+Step Functions = 業務フロー  
+Bedrock = モデル実行  
+
+👉 LLM中心か業務中心かで判断する
