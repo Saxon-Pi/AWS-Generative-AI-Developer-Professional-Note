@@ -4,6 +4,7 @@
 - [Amazon Lex と Synonyms（スロット改善）](#amazon-lex-と-synonymsスロット改善)
 - [Comprehendにおける Offsets / Labels の整理](#comprehendにおける-offsets--labels-の整理)
 - [LLMアーキテクチャ比較 （Bedrock / LangChain / LangGraph / Step Functions）](#llmアーキテクチャ比較-bedrock--langchain--langgraph--step-functions)
+- [Amazon Kendra （RAG × SaaS連携）](#amazon-kendra-rag--saas連携)
 
 ---
 
@@ -511,3 +512,116 @@ Step Functions = 業務フロー
 Bedrock = モデル実行  
 
 👉 LLM中心か業務中心かで判断する
+
+---
+
+# Amazon Kendra （RAG × SaaS連携）
+
+## 概要
+Amazon Kendraは、エンタープライズ向けのマネージド検索サービス。
+SaaSや社内システムからデータを自動取り込みし、ACL付きで検索可能。
+
+---
+
+## コアコンセプト
+
+Kendra = エンタープライズ検索エンジン + ネイティブコネクタ
+
+---
+
+## できること
+
+### ① SaaSと簡単連携
+- SharePoint
+- Salesforce
+- Google Drive
+- OneDrive
+- Slack
+
+👉 コネクタで自動接続可能（ETL不要）
+
+---
+
+### ② データの取り込みとインデックス化
+
+SaaS / ファイルサーバー  
+ ↓  
+Kendraコネクタ  
+ ↓  
+Kendraインデックス（内部保存）  
+ ↓  
+検索  
+
+👉 リアルタイム検索ではなく「取り込み後に検索」
+
+---
+
+### ③ ACL（アクセス制御）の維持
+
+- 元システムの権限を保持
+- ユーザーごとに検索結果を制御
+
+👉 セキュアなマルチテナント検索が可能
+
+---
+
+## RAGでの役割
+
+ユーザー質問  
+ ↓  
+Kendra検索（Retriever）  
+ ↓  
+検索結果をBedrockへ  
+ ↓  
+LLMが回答生成  
+
+👉 Kendra = Retrieval部分
+
+---
+
+## S3ベースRAGとの違い
+
+### 通常のRAG
+S3 → ETL → Embedding → Vector DB
+
+### Kendra
+SaaS → Kendra（自動取り込み + 検索）
+
+👉 開発・運用コストが大幅に削減
+
+---
+
+## メリット
+
+### ① カスタム開発不要
+- コネクタでデータ収集自動化
+
+### ② セキュリティ
+- ACL付き検索
+
+### ③ 運用簡素化
+- データ同期・検索を一元管理
+
+---
+
+## 注意点
+
+### ❗リアルタイム検索ではない
+- データは事前に同期される
+
+---
+
+## 試験ポイント
+
+- SaaS連携 → Kendra
+- ACL維持 → Kendra
+- ETL最小化 → Kendra
+- エンタープライズ検索 → Kendra
+
+---
+
+## 一言まとめ
+
+Kendra = SaaSデータを自動取り込みし、ACL付きで検索できるエンタープライズ検索サービス
+
+---

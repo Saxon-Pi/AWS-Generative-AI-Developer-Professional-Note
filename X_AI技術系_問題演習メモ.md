@@ -14,6 +14,8 @@
 - [SMOTE（Synthetic Minority Oversampling Technique）](#smotesynthetic-minority-oversampling-technique)
 - [RAGチャンク戦略： Semantic vs Hierarchical](#ragチャンク戦略-semantic-vs-hierarchical)
 - [RLHF（Reinforcement Learning from Human Feedback）](#rlhfreinforcement-learning-from-human-feedback)
+- [TTFT（Time to First Token）とBedrockストリーミング](#ttfttime-to-first-tokenとbedrockストリーミング)
+- [Query Transformation（クエリ変換）](#query-transformationクエリ変換)
 
 ---
 
@@ -1592,3 +1594,216 @@ Hierarchical = 検索の質を改善
 
 ## 一言まとめ
 RLHF = 人間の評価を報酬としてモデルを最適化する手法
+
+---
+
+# TTFT（Time to First Token）とBedrockストリーミング
+
+## 概要
+TTFT（Time to First Token）は、ユーザーがリクエストを送信してから「最初のトークン」が返るまでの時間。
+会話AI・通訳・チャットボットでは、体感速度に直結する重要指標。
+
+---
+
+## なぜTTFTが重要か
+
+- ユーザー体験（UX）に直結
+- 「応答が早い」と感じるかの指標
+- 全文の完了時間よりも重要な場合が多い
+
+---
+
+## TTFTを悪化させる要因
+
+1. 前処理の遅延（RAG検索など）
+2. 非ストリーミング応答（全文生成待ち）
+3. 中継層のバッファリング（API Gateway / Lambda）
+4. クライアント側の描画遅延
+
+---
+
+## 解決策（本質）
+
+👉 「全文完成後に返す」のをやめる
+
+---
+
+## Bedrockでの実現方法
+
+### ストリーミングAPI
+
+- InvokeModelWithResponseStream
+- ConverseStream
+
+👉 生成途中のトークンを逐次取得できる
+
+---
+
+## アーキテクチャ
+
+クライアント  
+ ↓  
+API Gateway（ストリーミング有効）  
+ ↓  
+Lambda（ストリーム中継）  
+ ↓  
+Bedrock（ストリーミング推論）  
+
+---
+
+## API Gateway設定
+
+- レスポンスストリーミング有効化
+- Transfer-Encoding: chunked
+- チャンク単位でクライアントへ転送
+
+---
+
+## Lambdaの役割
+
+- Bedrockストリームを受信
+- 受信したトークンを即時転送
+- バッファリングしない
+
+---
+
+## クライアント側
+
+- SSE / WebSocket / fetch streaming
+- 受信したトークンを逐次表示
+
+---
+
+## 効果
+
+- 初動レスポンス高速化
+- UX向上
+- リアルタイム感の向上
+
+---
+
+## 試験ポイント
+
+- TTFT改善 → ストリーミングAPI
+- 低レイテンシ → 逐次返却
+- 通訳 / チャット → ストリーミング必須
+
+---
+
+## 一言まとめ
+
+TTFT最適化 = Bedrockストリーミング推論 + チャンク転送による逐次応答
+
+---
+
+# Query Transformation（クエリ変換）
+
+## 概要
+Query Transformation（クエリ変換）は、ユーザーの曖昧な質問を、
+検索（特にベクトル検索）に適した自然言語へ変換する処理。
+
+---
+
+## 一言で
+
+クエリ変換 = 「ユーザーの意図」を「検索しやすい文章」に翻訳する
+
+---
+
+## なぜ必要か
+
+ユーザー入力は以下の問題を含むことが多い：
+
+- 曖昧（例：「なんか遅い」）
+- 文脈不足
+- 不完全な表現
+
+👉 そのまま検索すると「ズレた結果」が返る
+
+---
+
+## 解決方法
+
+LLMを使ってクエリを変換する
+
+ユーザー入力
+↓
+LLMで整形・補完
+↓
+検索（Vector DB / Kendra / OpenSearch）
+
+---
+
+## 具体例
+
+### 入力（曖昧）
+なんか遅いんだけど？
+
+### 変換後
+システムのレスポンス遅延の原因
+
+👉 意味を補完している点が重要
+
+---
+
+## SQLとの違い
+
+### ❌ SQL的変換
+SELECT * FROM logs WHERE latency > 1000
+
+### ✅ クエリ変換
+「高レイテンシの原因分析」
+
+👉 自然言語 → 自然言語
+
+---
+
+## クエリ変換で行う処理
+
+### ① 曖昧さ除去
+- 「これ」「あれ」などを具体化
+
+### ② 文脈補完
+- ユーザー意図を補う
+
+### ③ 検索最適化
+- Embeddingで意味が近くなる表現に変換
+
+---
+
+## なぜ効果があるのか
+
+ベクトル検索は「意味の近さ」で検索するため：
+
+- 入力の意味がズレる → 検索もズレる
+- 意味を補正 → 検索精度向上
+
+---
+
+## RAGでの位置付け
+
+RAGは3層構造：
+
+1. Retrieval（検索）
+2. Augmentation（プロンプト）
+3. Generation（LLM）
+
+👉 クエリ変換は「Retrieval改善」
+
+---
+
+## 試験ポイント
+
+以下の状況で使う：
+
+- コンテキストには忠実だが回答がズレる
+- 検索結果が意図と違う
+- ユーザー入力が曖昧
+
+👉 解決策：クエリ変換
+
+---
+
+## 一言まとめ
+
+Query Transformation = ユーザーの曖昧な質問を、意味を補完して検索に最適化する処理
