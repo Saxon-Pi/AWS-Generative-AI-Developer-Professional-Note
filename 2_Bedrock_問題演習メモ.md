@@ -1,3 +1,19 @@
+## 目次
+- [Amazon Bedrock Flows](#amazon-bedrock-flows)
+- [Bedrock Prompt Management](#bedrock-prompt-management)
+- [Bedrock Model Access Policies と SCP](#bedrock-model-access-policies-と-scp)
+- [Bedrock AgentCore ツール](#bedrock-agentcore-ツール)
+- [Amazon Bedrock Data Automation](#amazon-bedrock-data-automation)
+- [Bedrock モデル評価ジョブ（プロンプト評価）](#bedrock-モデル評価ジョブプロンプト評価)
+- [Bedrock Agent Trace機能](#bedrock-agent-trace機能)
+- [Bedrock Guardrail強制（IAM）](#bedrock-guardrail強制iam)
+- [API Gatewayでのノイジーネイバー対策 (Bedrock)](#api-gatewayでのノイジーネイバー対策-bedrock)
+- [Bedrock Knowledge Base におけるクエリ分解（Query Decomposition）](#bedrock-knowledge-base-におけるクエリ分解query-decomposition)
+- [Bedrock Guardrail 強制（IAM）](#bedrock-guardrail-強制iam)
+- [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
+
+---
+
 # Amazon Bedrock Flows
 https://docs.aws.amazon.com/ja_jp/bedrock/latest/userguide/flows-how-it-works.html
 
@@ -243,7 +259,7 @@ Model Access：Claude許可
 
 ---
 
-# Bedrock AgentCore ツールまとめノート
+# Bedrock AgentCore ツール
 
 ## 概要
 - AgentCore = エージェントに機能（能力）を追加するツール群
@@ -707,3 +723,480 @@ IAMポリシーで強制する必要がある
 ## まとめ
 
 Guardrail必須化は IAM の bedrock:GuardrailIdentifier で強制する
+
+---
+
+# API Gatewayでのノイジーネイバー対策 (Bedrock)
+
+## 概要
+複数アプリが同一のBedrockリソースを共有する場合、
+一部のアプリが過剰リクエストを送ることで他アプリに影響する問題（ノイジーネイバー）が発生する
+
+---
+
+## 問題の本質
+
+- バッチ処理が大量リクエストを送信
+- リアルタイムアプリがスロットリングされる
+- 共有リソースの奪い合い
+
+---
+
+## 解決アプローチ
+
+API Gatewayで「クライアント単位」にトラフィック制御を行う
+
+---
+
+## コア仕組み
+
+### ① API Key
+- クライアント識別子
+- アプリごとに発行
+
+---
+
+### ② Usage Plan
+- API Keyに紐づく制御設定
+- スロットリング（レート制限）
+- クォータ（総量制限）
+
+---
+
+## アーキテクチャイメージ
+
+バッチアプリ  
+ ↓（API Key A）  
+API Gateway（Usage Plan A：低レート）  
+ ↓  
+Lambda  
+ ↓  
+Bedrock  
+  
+チャットボット  
+ ↓（API Key B）  
+API Gateway（Usage Plan B：高レート）  
+ ↓  
+Lambda  
+ ↓  
+Bedrock  
+
+---
+
+## ポイント
+
+### ✔ クライアント単位で制御
+- エンドポイント分離は必須ではない
+- API Key単位で制御できる
+
+---
+
+### ✔ バッチ側を制限
+- バッチのリクエストを絞る
+- リアルタイム用の帯域を確保
+
+---
+
+### ✔ Bedrockには直接制御機能なし
+- フロントで制御する必要あり
+
+---
+
+## よくある誤解
+
+### ❌ エンドポイント分けないとダメ
+→ 不要（API Keyで分離可能）
+
+---
+
+### ❌ 完全に遮断できる
+→ Usage Planはベストエフォート
+
+---
+
+## 試験ポイント
+
+- ノイジーネイバー問題 → API Gateway
+- スロットリング制御 → Usage Plan
+- クライアント識別 → API Key
+
+---
+
+## 一言まとめ
+
+API Gateway = クライアント単位でリクエスト量を制御し、共有リソースの公平性を保つ仕組み
+
+---
+
+# Bedrock Knowledge Base におけるクエリ分解（Query Decomposition）
+
+## 概要
+クエリ分解とは、ユーザーの複雑な質問を複数のサブクエリに分割し、
+それぞれに対して検索を行うことでRAGの精度を向上させる仕組み。
+
+Amazon Bedrock Knowledge Basesでは、この機能を設定で有効化できる。
+
+---
+
+## 一言で
+
+クエリ分解 = 複雑な質問を「検索しやすい複数の質問」に分ける
+
+---
+
+## なぜ必要か
+
+複雑なクエリは：
+
+- 意味が曖昧になる
+- 検索精度が低下する
+- 重要な情報が埋もれる
+
+---
+
+## 問題例
+
+「糖尿病患者におけるインスリン治療と副作用の関係は？」
+
+---
+
+## クエリ分解後
+
+① 糖尿病患者 インスリン治療  
+② インスリン 副作用  
+
+→ それぞれ検索して結果を統合
+
+---
+
+## 効果
+
+### ✔ 検索精度向上
+
+- Recall向上（取りこぼし減少）
+- Precision向上（ノイズ減少）
+
+---
+
+### ✔ 意味の希釈防止
+
+- クエリを明確化
+
+---
+
+### ✔ ドメイン特化に強い
+
+- 医療・法律などの専門用語に有効
+
+---
+
+## 動作イメージ
+
+ユーザークエリ  
+ ↓  
+LLMによるクエリ分解  
+ ↓  
+複数クエリで検索（Vector DB）  
+ ↓  
+結果統合  
+ ↓  
+LLMで最終回答生成  
+
+---
+
+## 誰がやるのか
+
+- 内部的にはLLMが自然言語理解して分解
+- Bedrock Knowledge Baseでは設定で有効化可能
+
+---
+
+## 他の手法との違い
+
+### ❌ クエリ抽出
+- 不要部分を削る
+
+---
+
+### ❌ クエリ書き換え
+- 1つのクエリを改善
+
+---
+
+### ✅ クエリ分解
+- 複数のクエリに展開
+
+---
+
+## ユースケース
+
+- 医療質問応答
+- 法律ドキュメント検索
+- 複雑なビジネス分析
+
+---
+
+## メリット
+
+- 高精度RAG
+- 複雑クエリ対応
+- マネージドで簡単導入
+
+---
+
+## デメリット
+
+- 検索回数増加（わずかなコスト増）
+- 単純クエリでは効果薄
+
+---
+
+## 試験ポイント
+
+以下でクエリ分解：
+
+- 複雑な質問
+- 意味の希釈
+- 高精度RAG
+- ドメイン特化検索
+
+---
+
+## 一言まとめ
+
+クエリ分解 = 複雑な質問を分割して検索精度を高めるRAG最適化手法
+
+---
+
+# Bedrock Guardrail 強制（IAM）
+
+## 概要
+Amazon Bedrock の Guardrail を「必須化」するために、
+IAM ポリシーでリクエストに GuardrailIdentifier が含まれていない場合に拒否する仕組み
+
+---
+
+## 一言で
+
+Guardrail強制 = Guardrailが付いていないリクエストをIAMで拒否する
+
+---
+
+## 対象API
+
+- bedrock:InvokeModel
+- bedrock:InvokeModelWithResponseStream
+- bedrock:Converse
+- bedrock:ConverseStream
+
+---
+
+## どこに設定する？
+
+❌ Bedrockサービス側ではない  
+✅ Bedrockを呼び出す側（IAMロール）
+
+例：
+- Lambdaの実行ロール
+- ECS / EC2のロール
+- ユーザーIAMロール
+
+---
+
+## 動作フロー
+
+アプリ  
+ ↓  
+Bedrock API呼び出し（GuardrailIdentifier付き？）  
+ ↓  
+IAMポリシー評価  
+ ↓  
+✔ 付いている → 許可  
+❌ 付いていない → Deny（Bedrockに到達しない）  
+
+---
+
+## ポイント
+
+### ✔ IAMがチェックしているもの
+
+- GuardrailIdentifierが「指定されているか」
+
+---
+
+### ❌ IAMが見ていないもの
+
+- Guardrailの中身
+- Guardrailの評価結果
+
+---
+
+## サンプルポリシー
+```json
+{
+  "Effect": "Deny",
+  "Action": [
+    "bedrock:InvokeModel",
+    "bedrock:InvokeModelWithResponseStream",
+    "bedrock:Converse",
+    "bedrock:ConverseStream"
+  ],
+  "Resource": "*",
+  "Condition": {
+    "StringNotEquals": {
+      "bedrock:GuardrailIdentifier": "arn:aws:bedrock:region:account-id:guardrail/xxxx"
+    }
+  }
+}
+```
+---
+
+## なぜIAMでやるのか
+
+- Bedrock側には「Guardrail必須化」設定がない
+- 呼び出し制御はIAMで行うのがベストプラクティス
+
+---
+
+## 試験ポイント
+
+以下のキーワードでIAM制御：
+
+- Guardrail強制
+- バイパス防止
+- InvokeModel / Converse
+- 最小運用オーバーヘッド
+
+---
+
+## 一言まとめ
+
+Guardrail強制 = Guardrailを指定しないリクエストをIAMでブロックする仕組み
+
+---
+
+# Bedrock Guardrails 分析（trace & メトリクス）
+
+## 概要
+Amazon Bedrock Guardrailsで、なぜコンテンツがブロックされたのかを分析する方法  
+trace（詳細ログ）とメトリクス（統計）の2つを組み合わせて分析する  
+
+---
+
+## 一言で
+
+trace = 個別の原因分析  
+メトリクス = 全体の傾向分析
+
+---
+
+## ① trace
+
+### 設定
+
+guardrailConfig = {
+  "trace": "enabled"
+}
+
+---
+
+### 何がわかる？
+
+- どのガードレールルールが発動したか
+- なぜブロックされたか（理由）
+- どの部分が問題だったか
+
+---
+
+### 用途
+
+- デバッグ
+- 誤検知の特定
+- チューニング
+
+---
+
+### イメージ
+
+1リクエストごとに：
+
+「この入力は SensitiveInformationPolicy によりブロックされました」
+「理由：メールアドレスが検出されました」
+
+---
+
+## ② メトリクス（InvocationsIntervened）
+
+### ディメンション
+
+- ContentPolicy
+- TopicPolicy
+- SensitiveInformationPolicy
+
+---
+
+### 何がわかる？
+
+- どの種類のガードレールが多く発動しているか
+
+---
+
+### 用途
+
+- 傾向分析
+- 誤検知の多いルール特定
+
+---
+
+### イメージ
+
+- 80% が SensitiveInformationPolicy でブロック
+→ このルールが厳しすぎるかも
+
+---
+
+## 比較
+
+| 項目 | trace | メトリクス |
+|---|---|---|
+| 粒度 | 個別 | 集計 |
+| 内容 | 詳細理由 | 種類別カウント |
+| 用途 | デバッグ | モニタリング |
+
+---
+
+## 使い分け
+
+### ✔ trace
+- なぜブロックされたか知りたい
+- ルール調整したい
+
+---
+
+### ✔ メトリクス
+- 全体傾向を知りたい
+- 運用監視したい
+
+---
+
+## 試験ポイント
+
+以下のキーワードで trace：
+
+- なぜブロックされたか
+- 詳細分析
+- ガードレールの調整
+
+---
+
+以下のキーワードでメトリクス：
+
+- 発動頻度
+- 傾向分析
+- 監視
+
+---
+
+## 一言まとめ
+
+Guardrail分析 = trace（原因） + メトリクス（傾向）
