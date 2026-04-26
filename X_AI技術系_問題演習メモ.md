@@ -22,6 +22,7 @@
 - [Chain of Thought（CoT）とUX制御](#chain-of-thoughtcotとux制御)
 - [AST（抽象構文木）](#ast抽象構文木)
 - [Context Pruning](#context-pruning)
+- [stop sequences](#stop-sequences)
 
 ---
 
@@ -2584,3 +2585,99 @@ LLMの制約：
 ## 一言まとめ
 
 Context Pruning = 会話履歴を要約・削減してトークン制限を回避する仕組み
+
+---
+
+# stop sequences
+
+## 概要
+LLMの出力中に、特定の文字列が生成された時点で生成を停止するためのパラメータ。
+
+---
+
+## 一言で
+
+stop sequences = 「この文字列が出たら止める」
+
+---
+
+## 基本動作
+
+- モデルがトークンを生成
+- 指定した文字列に一致したら即停止
+
+---
+
+## 例
+
+stop_sequences = ["</answer>"]
+
+出力：
+
+<answer>
+返品は30日以内で可能です。
+</answer>
+追加情報...
+
+→ 「</answer>」で停止（追加情報は出ない）
+
+---
+
+## 主な用途
+
+### ✔ 出力の終端制御
+- 回答の終了ポイントを明確化
+
+---
+
+### ✔ フォーマット制御
+- XML / JSON形式の終了タグで停止
+
+例：
+<final_answer>...</final_answer>
+
+---
+
+### ✔ 暴走防止
+- 不要な続きの生成を防ぐ
+
+例：
+stop_sequences = ["Human:", "Assistant:"]
+
+---
+
+## max_tokens との違い
+
+| 項目 | 説明 |
+|---|---|
+| max_tokens | 出力の最大長で制御 |
+| stop sequences | 特定文字列で制御 |
+
+---
+
+## 注意点
+
+- 入力制御ではない
+- 出力側の制御
+
+❌ NG：
+ユーザー入力の危険ワード検知
+
+⭕ OK：
+モデル出力が特定文字列に到達したら停止
+
+---
+
+## 試験ポイント
+
+以下の要件で stop sequences：
+
+- 特定フレーズで出力停止
+- フォーマットの終端制御
+- 出力の暴走防止
+
+---
+
+## 一言まとめ
+
+stop sequences = モデル出力の終了条件を「文字列」で指定する仕組み

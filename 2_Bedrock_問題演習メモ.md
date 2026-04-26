@@ -2,13 +2,15 @@
 - [Amazon Bedrock Flows](#amazon-bedrock-flows)
 - [Bedrock Prompt Management](#bedrock-prompt-management)
 - [Bedrock Model Access Policies と SCP](#bedrock-model-access-policies-と-scp)
-- [Bedrock AgentCore ツールまとめノート](#bedrock-agentcore-ツールまとめノート)
+- [Bedrock AgentCore ツール](#bedrock-agentcore-ツール)
 - [Amazon Bedrock Data Automation](#amazon-bedrock-data-automation)
 - [Bedrock モデル評価ジョブ（プロンプト評価）](#bedrock-モデル評価ジョブプロンプト評価)
 - [Bedrock Agent Trace機能](#bedrock-agent-trace機能)
 - [Bedrock Guardrail強制（IAM）](#bedrock-guardrail強制iam)
 - [API Gatewayでのノイジーネイバー対策 (Bedrock)](#api-gatewayでのノイジーネイバー対策-bedrock)
 - [Bedrock Knowledge Base におけるクエリ分解（Query Decomposition）](#bedrock-knowledge-base-におけるクエリ分解query-decomposition)
+- [Bedrock Guardrail 強制（IAM）](#bedrock-guardrail-強制iam)
+- [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
 
 ---
 
@@ -257,7 +259,7 @@ Model Access：Claude許可
 
 ---
 
-# Bedrock AgentCore ツールまとめノート
+# Bedrock AgentCore ツール
 
 ## 概要
 - AgentCore = エージェントに機能（能力）を追加するツール群
@@ -963,3 +965,238 @@ LLMで最終回答生成
 ## 一言まとめ
 
 クエリ分解 = 複雑な質問を分割して検索精度を高めるRAG最適化手法
+
+---
+
+# Bedrock Guardrail 強制（IAM）
+
+## 概要
+Amazon Bedrock の Guardrail を「必須化」するために、
+IAM ポリシーでリクエストに GuardrailIdentifier が含まれていない場合に拒否する仕組み
+
+---
+
+## 一言で
+
+Guardrail強制 = Guardrailが付いていないリクエストをIAMで拒否する
+
+---
+
+## 対象API
+
+- bedrock:InvokeModel
+- bedrock:InvokeModelWithResponseStream
+- bedrock:Converse
+- bedrock:ConverseStream
+
+---
+
+## どこに設定する？
+
+❌ Bedrockサービス側ではない  
+✅ Bedrockを呼び出す側（IAMロール）
+
+例：
+- Lambdaの実行ロール
+- ECS / EC2のロール
+- ユーザーIAMロール
+
+---
+
+## 動作フロー
+
+アプリ  
+ ↓  
+Bedrock API呼び出し（GuardrailIdentifier付き？）  
+ ↓  
+IAMポリシー評価  
+ ↓  
+✔ 付いている → 許可  
+❌ 付いていない → Deny（Bedrockに到達しない）  
+
+---
+
+## ポイント
+
+### ✔ IAMがチェックしているもの
+
+- GuardrailIdentifierが「指定されているか」
+
+---
+
+### ❌ IAMが見ていないもの
+
+- Guardrailの中身
+- Guardrailの評価結果
+
+---
+
+## サンプルポリシー
+```json
+{
+  "Effect": "Deny",
+  "Action": [
+    "bedrock:InvokeModel",
+    "bedrock:InvokeModelWithResponseStream",
+    "bedrock:Converse",
+    "bedrock:ConverseStream"
+  ],
+  "Resource": "*",
+  "Condition": {
+    "StringNotEquals": {
+      "bedrock:GuardrailIdentifier": "arn:aws:bedrock:region:account-id:guardrail/xxxx"
+    }
+  }
+}
+```
+---
+
+## なぜIAMでやるのか
+
+- Bedrock側には「Guardrail必須化」設定がない
+- 呼び出し制御はIAMで行うのがベストプラクティス
+
+---
+
+## 試験ポイント
+
+以下のキーワードでIAM制御：
+
+- Guardrail強制
+- バイパス防止
+- InvokeModel / Converse
+- 最小運用オーバーヘッド
+
+---
+
+## 一言まとめ
+
+Guardrail強制 = Guardrailを指定しないリクエストをIAMでブロックする仕組み
+
+---
+
+# Bedrock Guardrails 分析（trace & メトリクス）
+
+## 概要
+Amazon Bedrock Guardrailsで、なぜコンテンツがブロックされたのかを分析する方法  
+trace（詳細ログ）とメトリクス（統計）の2つを組み合わせて分析する  
+
+---
+
+## 一言で
+
+trace = 個別の原因分析  
+メトリクス = 全体の傾向分析
+
+---
+
+## ① trace
+
+### 設定
+
+guardrailConfig = {
+  "trace": "enabled"
+}
+
+---
+
+### 何がわかる？
+
+- どのガードレールルールが発動したか
+- なぜブロックされたか（理由）
+- どの部分が問題だったか
+
+---
+
+### 用途
+
+- デバッグ
+- 誤検知の特定
+- チューニング
+
+---
+
+### イメージ
+
+1リクエストごとに：
+
+「この入力は SensitiveInformationPolicy によりブロックされました」
+「理由：メールアドレスが検出されました」
+
+---
+
+## ② メトリクス（InvocationsIntervened）
+
+### ディメンション
+
+- ContentPolicy
+- TopicPolicy
+- SensitiveInformationPolicy
+
+---
+
+### 何がわかる？
+
+- どの種類のガードレールが多く発動しているか
+
+---
+
+### 用途
+
+- 傾向分析
+- 誤検知の多いルール特定
+
+---
+
+### イメージ
+
+- 80% が SensitiveInformationPolicy でブロック
+→ このルールが厳しすぎるかも
+
+---
+
+## 比較
+
+| 項目 | trace | メトリクス |
+|---|---|---|
+| 粒度 | 個別 | 集計 |
+| 内容 | 詳細理由 | 種類別カウント |
+| 用途 | デバッグ | モニタリング |
+
+---
+
+## 使い分け
+
+### ✔ trace
+- なぜブロックされたか知りたい
+- ルール調整したい
+
+---
+
+### ✔ メトリクス
+- 全体傾向を知りたい
+- 運用監視したい
+
+---
+
+## 試験ポイント
+
+以下のキーワードで trace：
+
+- なぜブロックされたか
+- 詳細分析
+- ガードレールの調整
+
+---
+
+以下のキーワードでメトリクス：
+
+- 発動頻度
+- 傾向分析
+- 監視
+
+---
+
+## 一言まとめ
+
+Guardrail分析 = trace（原因） + メトリクス（傾向）

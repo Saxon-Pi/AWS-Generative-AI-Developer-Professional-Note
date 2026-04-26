@@ -1,10 +1,10 @@
 ## 目次
-- [S3 Glacier / Retrieval オプションまとめ](#s3-glacier--retrieval-オプションまとめ)
+- [S3 Glacier / Retrieval オプション](#s3-glacier--retrieval-オプション)
 - [Lake Formation LF-Tag](#lake-formation-lf-tag)
 
 ---
 
-# S3 Glacier / Retrieval オプションまとめ
+# S3 Glacier / Retrieval オプション
 
 ## 概要
 - 低頻度アクセスデータを低コストで保管するためのS3アーカイブ系ストレージ
