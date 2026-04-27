@@ -11,6 +11,7 @@
 - [Bedrock Knowledge Base におけるクエリ分解（Query Decomposition）](#bedrock-knowledge-base-におけるクエリ分解query-decomposition)
 - [Bedrock Guardrail 強制（IAM）](#bedrock-guardrail-強制iam)
 - [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
+- [Amazon Bedrock モデル呼び出しログ](#amazon-bedrock-モデル呼び出しログ)
 
 ---
 
@@ -1200,3 +1201,131 @@ guardrailConfig = {
 ## 一言まとめ
 
 Guardrail分析 = trace（原因） + メトリクス（傾向）
+
+---
+
+# Amazon Bedrock モデル呼び出しログ
+
+## 概要
+Amazon Bedrockは、モデル呼び出し時の詳細なログをAmazon S3に直接出力できる  
+コンプライアンス・監査・分析用途で重要  
+Bedrockログ = 「誰が・何を・どう呼んで・どう返ったか」を記録する仕組み  
+
+---
+
+## 記録される主な情報
+
+### ① リクエスト情報
+- ユーザー入力（プロンプト）
+- システムプロンプト
+- ツール呼び出し内容（Agent）
+
+---
+
+### ② レスポンス情報
+- モデル出力
+- トークン数（input / output）
+
+---
+
+### ③ メタデータ
+- modelId
+- API種別（InvokeModel / Converse）
+- タイムスタンプ
+- リージョン
+
+---
+
+### ④ 呼び出し元情報
+- IAMロール / ユーザー
+- AWSアカウントID
+
+---
+
+### ⑤ 推論パラメータ
+- temperature
+- top_p
+- max_tokens
+- stop sequences
+
+---
+
+### ⑥ Guardrail情報
+- 使用されたGuardrail
+- ブロック有無
+- trace有効時は詳細理由
+
+---
+
+## 主な用途
+
+### ✔ 監査（コンプライアンス）
+- 長期保存（例：7年）
+- 操作履歴の追跡
+
+---
+
+### ✔ トラブルシュート
+- 出力の再現
+- 不正な応答の原因分析
+
+---
+
+### ✔ コスト分析
+- トークン使用量の可視化
+
+---
+
+### ✔ セキュリティ
+- 誰がどのデータを入力したか追跡
+
+---
+
+## アーキテクチャ
+
+Bedrock
+ ↓
+ログ出力（ネイティブ）
+ ↓
+Amazon S3
+ ↓
+（オブジェクトロックで長期保持）
+
+---
+
+## なぜS3直接出力が重要か
+
+### ❌ EventBridge + CloudWatch
+- カスタム実装必要
+- 運用負荷が高い
+
+---
+
+### ✅ Bedrockネイティブログ
+- フルマネージド
+- 低運用コスト
+- 直接S3保存
+
+---
+
+## 注意点
+
+- PIIや機密情報もログに含まれる可能性あり
+- アクセス制御・マスキング設計が必要
+
+---
+
+## 試験ポイント
+
+以下のキーワードでBedrockログ：
+
+- 長期保存（7年）
+- コンプライアンス
+- 監査ログ
+- 低運用オーバーヘッド
+
+---
+
+## 一言まとめ
+
+Bedrockログ = モデル呼び出しの全情報をS3に記録する監査・分析基盤
