@@ -12,6 +12,7 @@
 - [Bedrock Guardrail 強制（IAM）](#bedrock-guardrail-強制iam)
 - [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
 - [Amazon Bedrock モデル呼び出しログ](#amazon-bedrock-モデル呼び出しログ)
+- [Amazon Bedrock AgentCore](#amazon-bedrock-agentcore)
 
 ---
 
@@ -1329,3 +1330,120 @@ Amazon S3
 ## 一言まとめ
 
 Bedrockログ = モデル呼び出しの全情報をS3に記録する監査・分析基盤
+
+---
+
+# Amazon Bedrock AgentCore
+
+## 概要
+Amazon Bedrock AgentCore は、PythonコードをそのままAPIとして実行できるマネージドランタイム  
+インフラ・サーバ・コンテナ管理を抽象化し、開発者はロジック実装に集中できる  
+
+---
+
+## 一言で
+
+AgentCore = 「コードを書くだけでAPIとして動く仕組み」
+
+---
+
+## できること
+
+### ✔ HTTPサーバ自動化
+@app.entrypoint デコレータで：
+
+- HTTPサーバ起動
+- リクエスト受信
+- ルーティング設定
+
+を自動化
+
+---
+
+### ✔ APIルーティング不要
+
+- /invoke などのエンドポイント定義不要
+- リクエストハンドリングを自動化
+
+---
+
+### ✔ コンテナ化の自動化（starter toolkit）
+
+- Dockerfile生成
+- 依存関係パッケージング
+- ビルド & デプロイ自動化
+
+---
+
+### ✔ 実行基盤の抽象化
+
+- スケーリング自動
+- 短時間応答・長時間ストリーミング対応
+- Bedrock Runtimeで実行
+
+---
+
+## 開発者がやること
+
+- Pythonコードを書く
+- ビジネスロジック設計
+- 必要なライブラリ指定
+
+---
+
+## 開発者がやらなくていいこと
+
+❌ Webサーバ構築  
+❌ APIルーティング設定  
+❌ コンテナ管理  
+❌ ヘルスチェック実装  
+
+---
+
+## アーキテクチャイメージ
+
+Pythonコード  
+ ↓  
+AgentCore SDK（entrypoint）  
+ ↓  
+自動API化  
+ ↓  
+AgentCore Runtime（マネージド実行）  
+
+---
+
+## メリット
+
+- 開発スピード向上
+- インフラ管理不要
+- サーバレス的な開発体験
+- 長時間処理（ストリーミング）も簡単対応
+
+---
+
+## 試験ポイント
+
+以下のキーワードでAgentCore：
+
+- サーバ設定不要
+- APIルーティング不要
+- コンテナ管理不要
+- 開発者の負担軽減
+- 長時間ストリーミング処理
+
+---
+
+## 他サービスとの違い
+
+| サービス | 役割 |
+|---|---|
+| AgentCore | API化 + 実行基盤 |
+| Lambda | 関数実行 |
+| API Gateway | ルーティング |
+| ECS/EKS | コンテナ管理 |
+
+---
+
+## 一言まとめ
+
+AgentCore = インフラを意識せずにAgentアプリをデプロイ・実行できるマネージド基盤
