@@ -13,6 +13,7 @@
 - [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
 - [Amazon Bedrock モデル呼び出しログ](#amazon-bedrock-モデル呼び出しログ)
 - [Amazon Bedrock AgentCore](#amazon-bedrock-agentcore)
+- [Bedrock 非同期推論（Async Invocation）](#bedrock-非同期推論async-invocation)
 
 ---
 
@@ -1447,3 +1448,91 @@ AgentCore Runtime（マネージド実行）
 ## 一言まとめ
 
 AgentCore = インフラを意識せずにAgentアプリをデプロイ・実行できるマネージド基盤
+
+---
+
+# Bedrock 非同期推論（Async Invocation）
+
+## 概要
+Amazon Bedrockの非同期推論（StartAsyncInvoke）は、  
+長時間かかる生成処理をHTTP接続から切り離して実行する仕組み  
+
+---
+
+## 一言で
+
+非同期推論 = 「受付だけ返して、結果は後で取得」
+
+---
+
+## 同期 vs 非同期
+
+### 同期推論（InvokeModel）
+
+- リクエスト送信
+- 処理完了まで接続を維持
+- 結果をその場で返却
+
+問題：
+- 長時間処理でタイムアウト（例：ALB 60秒制限）
+
+---
+
+### 非同期推論（StartAsyncInvoke）
+
+- リクエスト送信
+- invocationArn を即時返却
+- 接続終了
+- 裏で処理継続
+- 結果はS3に保存
+
+---
+
+## フロー
+
+1. StartAsyncInvoke を呼び出し
+2. invocationArn を取得
+3. HTTPセッション終了
+4. Bedrockがバックグラウンド処理
+5. 結果をS3に出力
+6. GetAsyncInvoke で状態確認（polling）
+7. 完了後、S3から結果取得
+
+---
+
+## なぜ必要か
+
+- 動画生成など数分かかる処理に対応
+- API Gateway / ALB のタイムアウト回避
+- フロントエンドの待ち時間削減
+
+---
+
+## ポイント
+
+- セッションを維持しない（ここ重要）
+- 状態管理は invocationArn で行う
+- 結果は直接レスポンスではなくS3に出力
+
+---
+
+## 試験ポイント
+
+以下の条件で非同期推論：
+
+- 長時間処理（数分以上）
+- タイムアウト制約あり（ALB / API Gateway）
+- リアルタイム応答不要
+
+---
+
+## よくある誤り
+
+❌ InvokeModel + クライアントポーリング  
+→ 同期処理なのでタイムアウト回避できない  
+
+---
+
+## 一言まとめ
+
+Bedrock非同期推論 = 長時間生成をHTTP接続から切り離して処理する仕組み
