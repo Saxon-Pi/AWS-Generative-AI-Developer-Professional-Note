@@ -14,6 +14,8 @@
 - [Amazon Bedrock モデル呼び出しログ](#amazon-bedrock-モデル呼び出しログ)
 - [Amazon Bedrock AgentCore](#amazon-bedrock-agentcore)
 - [Bedrock 非同期推論（Async Invocation）](#bedrock-非同期推論async-invocation)
+- [Bedrock Knowledge Bases Advanced Parsing](#bedrock-knowledge-bases-advanced-parsing)
+- [Bedrock Human Evaluation](#bedrock-human-evaluation)
 
 ---
 
@@ -1536,3 +1538,179 @@ Amazon Bedrockの非同期推論（StartAsyncInvoke）は、
 ## 一言まとめ
 
 Bedrock非同期推論 = 長時間生成をHTTP接続から切り離して処理する仕組み
+
+---
+
+# Bedrock Knowledge Bases Advanced Parsing
+
+## 概要
+Advanced Parsing は、Amazon Bedrock Knowledge Bases のデータ取り込み時に、  
+Foundation Model（FM）を利用してドキュメントの構造を理解する機能  
+
+---
+
+## 一言で
+
+Advanced Parsing = 「ドキュメント構造をAIで理解してからチャンク化する」  
+
+---
+
+## 従来の取り込みの問題
+
+### 通常のフロー
+PDF → テキスト抽出 → 平坦化  
+
+問題：
+- 表構造が壊れる
+- カラム関係が消える
+- 意味が失われる
+
+---
+
+## Advanced Parsing の動き
+
+PDF → FMが構造解析 → 意味を保ったチャンク生成  
+
+理解できるもの：
+- テーブル（列・行の関係）
+- レイアウト
+- セクション構造
+
+---
+
+## 効果
+
+- RAG検索精度向上
+- 誤回答（ハルシネーション）削減
+- 表データの正確な理解
+
+---
+
+## 使用方法
+
+Knowledge Base の Data Source 設定で：
+
+- Advanced parsing を有効化
+- 使用するFoundation Modelを選択
+
+---
+
+## 試験ポイント
+
+以下のキーワードが出たら：
+
+- PDF
+- tables（表）
+- レイアウト崩壊
+- 構造が失われる
+- least effort
+
+→ Advanced parsing を選択  
+
+---
+
+## 他手法との比較
+
+### ❌ Semantic Chunking
+- テキストの意味で分割
+- 構造は復元できない
+
+### ❌ Parent-Child Chunking
+- 文脈を保持する
+- 構造が壊れていると意味なし
+
+### ❌ Textract + Lambda
+- 正確だが実装コスト高
+
+---
+
+## 一言まとめ
+
+Advanced Parsing = 「壊れた構造をAIで復元してからEmbeddingする」
+
+---
+
+# Bedrock Human Evaluation
+
+## 概要
+Amazon Bedrock Model Evaluation は、人間による主観的評価を実施できる機能  
+創造性・トーン・ペルソナ適合など、自動指標では測れない品質を評価可能  
+
+---
+
+## 一言で
+
+Human Evaluation = 人間がモデル出力を評価する仕組み
+
+---
+
+## 主要機能
+
+### ✔ Human Evaluation
+- 人間が出力を直接レビュー
+- 主観的品質（創造性・自然さ）を評価
+
+---
+
+### ✔ Model Comparison（重要）
+- BaseモデルとFine-tunedモデルを並べて比較
+- どちらが優れているかを人間が判断
+
+---
+
+### ✔ Private Workforce
+- 社内メンバーのみで評価可能
+- 専門家（例：ナラティブデザイナー）によるレビュー
+
+---
+
+### ✔ カスタム評価指標
+- Likertスケール（例：1〜5）
+- 指標例：
+  - Creativity
+  - Persona Alignment
+  - Tone
+
+---
+
+## なぜ必要か
+
+自動評価の限界：
+
+- ROUGE / BLEU / BERTScore → 類似度評価
+- 創造性や自然さは測れない
+
+---
+
+## 自動評価との違い
+
+| 評価方法 | 特徴 |
+|---|---|
+| 自動評価 | 客観的・高速・スケーラブル |
+| 人間評価 | 主観的・高品質・コスト高 |
+
+---
+
+## 試験ポイント
+
+以下のキーワードでHuman Evaluation：
+
+- 創造性（Creativity）
+- トーン（Tone）
+- ペルソナ（Persona）
+- 人間の主観
+- UX品質
+
+---
+
+## 逆に自動評価を選ぶケース
+
+- 正解データあり
+- 分類・翻訳など精度評価
+- 類似度測定
+
+---
+
+## 一言まとめ
+
+Human Evaluation = 数値で測れない品質を人間が評価する仕組み
