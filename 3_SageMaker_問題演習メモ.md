@@ -248,13 +248,13 @@ Model C（パラメータ変更）
 
 ## アーキテクチャ
 
-Model Registry
-↓
-Model（ARN）
-↓
-Endpoint Configuration
-↓
-Endpoint（実行環境）
+Model Registry  
+↓  
+Model（ARN）  
+↓  
+Endpoint Configuration  
+↓  
+Endpoint（実行環境）  
 
 ---
 

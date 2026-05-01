@@ -11,6 +11,11 @@
 - [Bedrock Knowledge Base におけるクエリ分解（Query Decomposition）](#bedrock-knowledge-base-におけるクエリ分解query-decomposition)
 - [Bedrock Guardrail 強制（IAM）](#bedrock-guardrail-強制iam)
 - [Bedrock Guardrails 分析（trace \& メトリクス）](#bedrock-guardrails-分析trace--メトリクス)
+- [Amazon Bedrock モデル呼び出しログ](#amazon-bedrock-モデル呼び出しログ)
+- [Amazon Bedrock AgentCore](#amazon-bedrock-agentcore)
+- [Bedrock 非同期推論（Async Invocation）](#bedrock-非同期推論async-invocation)
+- [Bedrock Knowledge Bases Advanced Parsing](#bedrock-knowledge-bases-advanced-parsing)
+- [Bedrock Human Evaluation](#bedrock-human-evaluation)
 
 ---
 
@@ -1200,3 +1205,512 @@ guardrailConfig = {
 ## 一言まとめ
 
 Guardrail分析 = trace（原因） + メトリクス（傾向）
+
+---
+
+# Amazon Bedrock モデル呼び出しログ
+
+## 概要
+Amazon Bedrockは、モデル呼び出し時の詳細なログをAmazon S3に直接出力できる  
+コンプライアンス・監査・分析用途で重要  
+Bedrockログ = 「誰が・何を・どう呼んで・どう返ったか」を記録する仕組み  
+
+---
+
+## 記録される主な情報
+
+### ① リクエスト情報
+- ユーザー入力（プロンプト）
+- システムプロンプト
+- ツール呼び出し内容（Agent）
+
+---
+
+### ② レスポンス情報
+- モデル出力
+- トークン数（input / output）
+
+---
+
+### ③ メタデータ
+- modelId
+- API種別（InvokeModel / Converse）
+- タイムスタンプ
+- リージョン
+
+---
+
+### ④ 呼び出し元情報
+- IAMロール / ユーザー
+- AWSアカウントID
+
+---
+
+### ⑤ 推論パラメータ
+- temperature
+- top_p
+- max_tokens
+- stop sequences
+
+---
+
+### ⑥ Guardrail情報
+- 使用されたGuardrail
+- ブロック有無
+- trace有効時は詳細理由
+
+---
+
+## 主な用途
+
+### ✔ 監査（コンプライアンス）
+- 長期保存（例：7年）
+- 操作履歴の追跡
+
+---
+
+### ✔ トラブルシュート
+- 出力の再現
+- 不正な応答の原因分析
+
+---
+
+### ✔ コスト分析
+- トークン使用量の可視化
+
+---
+
+### ✔ セキュリティ
+- 誰がどのデータを入力したか追跡
+
+---
+
+## アーキテクチャ
+
+Bedrock  
+ ↓  
+ログ出力（ネイティブ）  
+ ↓  
+Amazon S3  
+ ↓  
+（オブジェクトロックで長期保持）  
+
+---
+
+## なぜS3直接出力が重要か
+
+### ❌ EventBridge + CloudWatch
+- カスタム実装必要
+- 運用負荷が高い
+
+---
+
+### ✅ Bedrockネイティブログ
+- フルマネージド
+- 低運用コスト
+- 直接S3保存
+
+---
+
+## 注意点
+
+- PIIや機密情報もログに含まれる可能性あり
+- アクセス制御・マスキング設計が必要
+
+---
+
+## 試験ポイント
+
+以下のキーワードでBedrockログ：
+
+- 長期保存（7年）
+- コンプライアンス
+- 監査ログ
+- 低運用オーバーヘッド
+
+---
+
+## 一言まとめ
+
+Bedrockログ = モデル呼び出しの全情報をS3に記録する監査・分析基盤
+
+---
+
+# Amazon Bedrock AgentCore
+
+## 概要
+Amazon Bedrock AgentCore は、PythonコードをそのままAPIとして実行できるマネージドランタイム  
+インフラ・サーバ・コンテナ管理を抽象化し、開発者はロジック実装に集中できる  
+
+---
+
+## 一言で
+
+AgentCore = 「コードを書くだけでAPIとして動く仕組み」
+
+---
+
+## できること
+
+### ✔ HTTPサーバ自動化
+@app.entrypoint デコレータで：
+
+- HTTPサーバ起動
+- リクエスト受信
+- ルーティング設定
+
+を自動化
+
+---
+
+### ✔ APIルーティング不要
+
+- /invoke などのエンドポイント定義不要
+- リクエストハンドリングを自動化
+
+---
+
+### ✔ コンテナ化の自動化（starter toolkit）
+
+- Dockerfile生成
+- 依存関係パッケージング
+- ビルド & デプロイ自動化
+
+---
+
+### ✔ 実行基盤の抽象化
+
+- スケーリング自動
+- 短時間応答・長時間ストリーミング対応
+- Bedrock Runtimeで実行
+
+---
+
+## 開発者がやること
+
+- Pythonコードを書く
+- ビジネスロジック設計
+- 必要なライブラリ指定
+
+---
+
+## 開発者がやらなくていいこと
+
+❌ Webサーバ構築  
+❌ APIルーティング設定  
+❌ コンテナ管理  
+❌ ヘルスチェック実装  
+
+---
+
+## アーキテクチャイメージ
+
+Pythonコード  
+ ↓  
+AgentCore SDK（entrypoint）  
+ ↓  
+自動API化  
+ ↓  
+AgentCore Runtime（マネージド実行）  
+
+---
+
+## メリット
+
+- 開発スピード向上
+- インフラ管理不要
+- サーバレス的な開発体験
+- 長時間処理（ストリーミング）も簡単対応
+
+---
+
+## 試験ポイント
+
+以下のキーワードでAgentCore：
+
+- サーバ設定不要
+- APIルーティング不要
+- コンテナ管理不要
+- 開発者の負担軽減
+- 長時間ストリーミング処理
+
+---
+
+## 他サービスとの違い
+
+| サービス | 役割 |
+|---|---|
+| AgentCore | API化 + 実行基盤 |
+| Lambda | 関数実行 |
+| API Gateway | ルーティング |
+| ECS/EKS | コンテナ管理 |
+
+---
+
+## 一言まとめ
+
+AgentCore = インフラを意識せずにAgentアプリをデプロイ・実行できるマネージド基盤
+
+---
+
+# Bedrock 非同期推論（Async Invocation）
+
+## 概要
+Amazon Bedrockの非同期推論（StartAsyncInvoke）は、  
+長時間かかる生成処理をHTTP接続から切り離して実行する仕組み  
+
+---
+
+## 一言で
+
+非同期推論 = 「受付だけ返して、結果は後で取得」
+
+---
+
+## 同期 vs 非同期
+
+### 同期推論（InvokeModel）
+
+- リクエスト送信
+- 処理完了まで接続を維持
+- 結果をその場で返却
+
+問題：
+- 長時間処理でタイムアウト（例：ALB 60秒制限）
+
+---
+
+### 非同期推論（StartAsyncInvoke）
+
+- リクエスト送信
+- invocationArn を即時返却
+- 接続終了
+- 裏で処理継続
+- 結果はS3に保存
+
+---
+
+## フロー
+
+1. StartAsyncInvoke を呼び出し
+2. invocationArn を取得
+3. HTTPセッション終了
+4. Bedrockがバックグラウンド処理
+5. 結果をS3に出力
+6. GetAsyncInvoke で状態確認（polling）
+7. 完了後、S3から結果取得
+
+---
+
+## なぜ必要か
+
+- 動画生成など数分かかる処理に対応
+- API Gateway / ALB のタイムアウト回避
+- フロントエンドの待ち時間削減
+
+---
+
+## ポイント
+
+- セッションを維持しない（ここ重要）
+- 状態管理は invocationArn で行う
+- 結果は直接レスポンスではなくS3に出力
+
+---
+
+## 試験ポイント
+
+以下の条件で非同期推論：
+
+- 長時間処理（数分以上）
+- タイムアウト制約あり（ALB / API Gateway）
+- リアルタイム応答不要
+
+---
+
+## よくある誤り
+
+❌ InvokeModel + クライアントポーリング  
+→ 同期処理なのでタイムアウト回避できない  
+
+---
+
+## 一言まとめ
+
+Bedrock非同期推論 = 長時間生成をHTTP接続から切り離して処理する仕組み
+
+---
+
+# Bedrock Knowledge Bases Advanced Parsing
+
+## 概要
+Advanced Parsing は、Amazon Bedrock Knowledge Bases のデータ取り込み時に、  
+Foundation Model（FM）を利用してドキュメントの構造を理解する機能  
+
+---
+
+## 一言で
+
+Advanced Parsing = 「ドキュメント構造をAIで理解してからチャンク化する」  
+
+---
+
+## 従来の取り込みの問題
+
+### 通常のフロー
+PDF → テキスト抽出 → 平坦化  
+
+問題：
+- 表構造が壊れる
+- カラム関係が消える
+- 意味が失われる
+
+---
+
+## Advanced Parsing の動き
+
+PDF → FMが構造解析 → 意味を保ったチャンク生成  
+
+理解できるもの：
+- テーブル（列・行の関係）
+- レイアウト
+- セクション構造
+
+---
+
+## 効果
+
+- RAG検索精度向上
+- 誤回答（ハルシネーション）削減
+- 表データの正確な理解
+
+---
+
+## 使用方法
+
+Knowledge Base の Data Source 設定で：
+
+- Advanced parsing を有効化
+- 使用するFoundation Modelを選択
+
+---
+
+## 試験ポイント
+
+以下のキーワードが出たら：
+
+- PDF
+- tables（表）
+- レイアウト崩壊
+- 構造が失われる
+- least effort
+
+→ Advanced parsing を選択  
+
+---
+
+## 他手法との比較
+
+### ❌ Semantic Chunking
+- テキストの意味で分割
+- 構造は復元できない
+
+### ❌ Parent-Child Chunking
+- 文脈を保持する
+- 構造が壊れていると意味なし
+
+### ❌ Textract + Lambda
+- 正確だが実装コスト高
+
+---
+
+## 一言まとめ
+
+Advanced Parsing = 「壊れた構造をAIで復元してからEmbeddingする」
+
+---
+
+# Bedrock Human Evaluation
+
+## 概要
+Amazon Bedrock Model Evaluation は、人間による主観的評価を実施できる機能  
+創造性・トーン・ペルソナ適合など、自動指標では測れない品質を評価可能  
+
+---
+
+## 一言で
+
+Human Evaluation = 人間がモデル出力を評価する仕組み
+
+---
+
+## 主要機能
+
+### ✔ Human Evaluation
+- 人間が出力を直接レビュー
+- 主観的品質（創造性・自然さ）を評価
+
+---
+
+### ✔ Model Comparison（重要）
+- BaseモデルとFine-tunedモデルを並べて比較
+- どちらが優れているかを人間が判断
+
+---
+
+### ✔ Private Workforce
+- 社内メンバーのみで評価可能
+- 専門家（例：ナラティブデザイナー）によるレビュー
+
+---
+
+### ✔ カスタム評価指標
+- Likertスケール（例：1〜5）
+- 指標例：
+  - Creativity
+  - Persona Alignment
+  - Tone
+
+---
+
+## なぜ必要か
+
+自動評価の限界：
+
+- ROUGE / BLEU / BERTScore → 類似度評価
+- 創造性や自然さは測れない
+
+---
+
+## 自動評価との違い
+
+| 評価方法 | 特徴 |
+|---|---|
+| 自動評価 | 客観的・高速・スケーラブル |
+| 人間評価 | 主観的・高品質・コスト高 |
+
+---
+
+## 試験ポイント
+
+以下のキーワードでHuman Evaluation：
+
+- 創造性（Creativity）
+- トーン（Tone）
+- ペルソナ（Persona）
+- 人間の主観
+- UX品質
+
+---
+
+## 逆に自動評価を選ぶケース
+
+- 正解データあり
+- 分類・翻訳など精度評価
+- 類似度測定
+
+---
+
+## 一言まとめ
+
+Human Evaluation = 数値で測れない品質を人間が評価する仕組み

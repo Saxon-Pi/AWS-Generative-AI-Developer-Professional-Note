@@ -6,6 +6,7 @@
 - [LLMアーキテクチャ比較 （Bedrock / LangChain / LangGraph / Step Functions）](#llmアーキテクチャ比較-bedrock--langchain--langgraph--step-functions)
 - [Amazon Kendra （RAG × SaaS連携）](#amazon-kendra-rag--saas連携)
 - [AWS Clean Rooms ML](#aws-clean-rooms-ml)
+- [Amazon Q Developer 自動テスト生成](#amazon-q-developer-自動テスト生成)
 
 ---
 
@@ -784,3 +785,99 @@ AWS Clean Rooms ML（コラボ環境）
 AWS Clean Rooms ML = データを共有せずに安全に共同で機械学習を行う仕組み
 
 ---
+
+# Amazon Q Developer 自動テスト生成
+
+## 概要
+Amazon Q Developerは、コードを解析してユニットテストや統合テストを自動生成する開発支援ツール  
+開発者のテスト作成負荷を削減し、テストカバレッジの標準化を実現する  
+
+---
+
+## 一言で
+
+Q Developer = テストコードを自動で書くツール
+
+---
+
+## できること
+
+### ✔ コード解析
+- 関数の入力/出力を理解
+- ロジック・分岐・例外処理を把握
+
+---
+
+### ✔ テスト生成
+- ユニットテスト
+- 基本的な統合テスト
+- エッジケース・異常系
+
+---
+
+### ✔ AIアプリ特化対応
+- Bedrockレスポンスのモック
+- ストリーミング出力のテスト
+- Guardrail挙動の検証
+
+---
+
+## できないこと（重要）
+
+❌ システム全体（インフラ含む）の完全理解  
+❌ E2Eテストの自動設計  
+❌ テスト実行の制御
+
+---
+
+## 役割分担
+
+Q Developer → テストコード生成  
+CI/CD → テスト実行・継続的検証  
+
+---
+
+## CI/CDとの連携
+
+CodePipeline / GitHub Actions / GitLab CIなどに統合して：
+
+- コード変更時にテスト自動生成
+- 生成されたテストを自動実行
+- カバレッジの標準化
+
+---
+
+## メリット
+
+- テスト作成時間削減（30〜40%削減）
+- カバレッジ向上
+- 開発者の負担軽減
+- テスト品質の標準化
+
+---
+
+## 試験ポイント
+
+以下のキーワードでQ Developer：
+
+- 手動テスト作成が負担
+- ボイラープレート削減
+- テストカバレッジのばらつき
+- CI/CD統合
+
+---
+
+## 他サービスとの違い
+
+| サービス | 役割 |
+|---|---|
+| Q Developer | テスト生成 |
+| CI/CD | テスト実行 |
+| Step Functions | 品質ゲート |
+| CloudWatch | 監視 |
+
+---
+
+## 一言まとめ
+
+Q Developer = コードを理解してテストを自動生成し、開発効率と品質を向上させるツール
